@@ -3,6 +3,7 @@ LucidChart, currently in alpha-stage, is an application (and potentially library
 
 The app is running live at http://experiments.vertecology.com/lucidchart/
 
+js directory includes THREE.js files essential to app function.
 ___________________________________________________________________________
 
 # Changelog
