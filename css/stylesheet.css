@@ -1,0 +1,109 @@
+/* 
+ * STYLESHEET.CSS 
+ * Stylesheet for LucidChart Experiment Application
+ * Author: Mark Scott Lavin
+ * Version 0.1
+ * 
+*/
+
+/* Desktop/Mobile UI Styles */
+
+#visualizationContainer {
+	height: 80%;
+	overflow: hidden;
+	}
+
+#desktopUI {
+	z-index:99999; 
+	background-color:#fff;
+}
+
+#equationTextBox {
+	width: 100%;
+}
+
+.smallNumberInput {
+	width: 80%;
+}
+
+input[readonly] {
+	background-color:#eee;
+	border: 1px #888 solid;
+	padding: 2px;
+}
+
+.xText {
+	color: #ff0000;
+}
+
+.yText {
+	color: #008800;
+}
+
+.zText {
+	color: #0000ff;
+}
+
+.inLineLabel {
+	width: 20%;
+}
+
+.darkBg {
+	background-color:#888;
+	color:#fff;
+}
+
+#dataRangeTable .col1{
+	width:10%;
+}
+#dataRangeTable .col2{
+	width:25%;
+}
+#dataRangeTable .col3{
+	width:25%;
+}
+#dataRangeTable .col4{
+	width:25%;
+}
+#threshSettingsTable .col1{
+	width:15%;
+}
+#threshSettingsTable .col2{
+	width:25%;
+}
+#threshSettingsTable .col3{
+	width:25%;
+}
+#threshSettingsTable .col4{
+	width:25%;
+}
+#randomMinMaxHeightTable .col1{
+	width: 25%; 
+}
+#randomMinMaxHeightTable .col2{
+	width: 25%;
+}
+#monoColorPickerTable .col1{
+	width: 60%;
+}
+#monoColorPickerTable .col2{
+	width: 25%;
+}
+#byHeightColorPickersTable .col1{
+	width: 60%;
+}
+#byHeightColorPickersTable .col2{
+	width: 25%;
+}	
+#choosePaletteDepthTable,
+#barThicknessTable {
+	width: 100%;
+}	
+#choosePaletteDepthTable .col1,
+#barThicknessTable .col1{
+	width: 35%;
+}
+#choosePaletteDepthTable .col2,
+#barThicknessTable .col2{
+	width: 65%;
+}
