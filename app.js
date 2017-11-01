@@ -1,6 +1,6 @@
 /* APP
  * Name: LucidChart
- * version 0.5.3
+ * version 0.5.4
  * Author: Mark Scott Lavin 
  * License: MIT
  * For Changelog see README.txt
@@ -12,8 +12,9 @@
 
 // Top-level Initialization Vars
 var container = document.getElementById('visualizationContainer');
+
 var scene = new THREE.Scene;
-scene.entities = {}; // Holds .objects, .lights, .cameras
+var entities = {}; // Holds .objects, .lights, .cameras
 scene.events = {
 	synthetic: {}
 	};
@@ -34,25 +35,28 @@ scene.softFramework = function() {
 	// MATERIALS
 	materials();
 };
-scene.utils = {
-	entityParent: function( name ) {
 
-		var parentObj = new THREE.Object3D();
-		parentObj.name = name;
-		scene.add( parentObj );
-		return parentObj;
-	},
-	entityDelete: function( name ) {
-		
-		var entity = scene.getObjectByName( name )	
-		scene.remove( entity );
+var utils = {
+	entity: { 
+		parentEntity: function( name ) {
+
+			var parentObj = new THREE.Object3D();
+			parentObj.name = name;
+			scene.add( parentObj );
+			return parentObj;
+		},
+		remove: function( name ) {
+			
+			var entity = scene.getObjectByName( name )	
+			scene.remove( entity );
+		}
 	},
 	geometries: {
 		fromExternal: {
 			load: function( sourceFilePath , sourceFormat ) {
 				
-				scene.utils.geometries.fromExternal[sourceFormat] ( sourceFilePath ) || function() { console.error ( 'Invalid file source format provided. Must be OBJ or JSON' ) };
-				debug.master && console.log ('About to Load all the Geometry' );
+				utils.geometries.fromExternal[sourceFormat] ( sourceFilePath ) || function() { console.error ( 'Invalid file source format provided. Must be OBJ or JSON' ) };
+				debug.master && debug.externalLoading && console.log ('About to Load all the Geometry' );
 
 			},
 			OBJ: function( sourceFilePath ) {  // Example: 'assets/monster.obj'
@@ -62,19 +66,19 @@ scene.utils = {
 
 				loader = new THREE.OBJLoader();
 						
-				debug.master && console.log ('About to call loader.load' );		
+				debug.master && debug.externalLoading && console.log ('About to call loader.load' );		
 						
 				loader.load(
 					sourceFilePath , function ( object ) { 
 					
-						debug.master && console.log ('Starting to run loader.load CALLBACK' );
+						debug.master && debug.externalLoading && console.log ('Starting to run loader.load CALLBACK' );
 						
 						geometry = new THREE.Geometry().fromBufferGeometry( object.children["0"].geometry );
 						geometry.computeLineDistances();
 									
 						mesh = new THREE.Mesh ( geometry );			
 						
-						debug.master && console.log ( mesh );
+						debug.master && debug.externalLoading && console.log ( mesh );
 						
 						scene.events.synthetic.objectFinishedLoading = new CustomEvent('objectFinishedLoading' , { 
 							detail : { 
@@ -83,18 +87,18 @@ scene.utils = {
 								}
 								);
 						
-						debug.master && console.log ( 'About to dispatch the Finished Loading Event' );
+						debug.master && debug.externalLoading && console.log ( 'About to dispatch the Finished Loading Event' );
 						
 						dispatchEvent( scene.events.synthetic.objectFinishedLoading);
 						
-						debug.master && console.log ( 'Just Dispatched the Finished Loading Event' );
-						debug.master && console.log ( scene.events.synthetic.objectFinishedLoading );
+						debug.master && debug.externalLoading && console.log ( 'Just Dispatched the Finished Loading Event' );
+						debug.master && debug.externalLoading && console.log ( scene.events.synthetic.objectFinishedLoading );
 						
-						debug.master && console.log ('Done running loader.load CALLBACK' );		
+						debug.master && debug.externalLoading && console.log ('Done running loader.load CALLBACK' );		
 					
 						}	);
 				
-				debug.master && console.log ('Done calling loader.load' );
+				debug.master && debug.externalLoading && console.log ('Done calling loader.load' );
 			},
 			JSON: function( sourceFilePath ) {  // Example: 'assets/monster.JSON'
 
@@ -106,12 +110,12 @@ scene.utils = {
 		},
 		mutate: function() {
 			
-			scene.entities.geometries.dynamic.sphere = new THREE.SphereGeometry( 3, 24, 24 );
-			scene.entities.geometries.dynamic.loadedFromExternal.mutated.lineSphere = new THREE.Line( geo2line(scene.entities.geometries.dynamic.sphere), scene.entities.materials.line.dashed.blue, THREE.linePieces );
-			//scene.add( scene.entities.geometries.dynamic.loadedFromExternal.mutated.lineSphere );
+			entities.geometries.dynamic.sphere = new THREE.SphereGeometry( 3, 24, 24 );
+			entities.geometries.dynamic.loadedFromExternal.mutated.lineSphere = new THREE.Line( geo2line(entities.geometries.dynamic.sphere), entities.materials.line.dashed.blue, THREE.linePieces );
+			//scene.add( entities.geometries.dynamic.loadedFromExternal.mutated.lineSphere );
 			
-			debug.master && console.log ('First Geometry Loaded: The Line Sphere' );
-			debug.master && console.log ( scene.entities.geometries.dynamic.loadedFromExternal.mutated.lineSphere );
+			debug.master && debug.externalLoading && console.log ('First Geometry Loaded: The Line Sphere' );
+			debug.master && debug.externalLoading && console.log ( entities.geometries.dynamic.loadedFromExternal.mutated.lineSphere );
 
 		}
 	}		
@@ -119,31 +123,24 @@ scene.utils = {
 
 
 var renderer;
-// Setup debugging (incommplete & untested, complete the logic later)
-var debug = {
-		master: false,
-		parentState: function( parent, area ) {
-				if (debug[parent] && debug[area]) {
-				}
-				else { 
-					debug[area] = false;
-				};
-				return debug[area];
-			},
-		lucidChart: function(){
-			debug.parentState( master, lucidChart );
-		},
-		colorLib: function(){
-			debug.parentState( master, colorLib );
-		},
-		UI: { 
-			master: function( bool ) {
-				debug.parentState( master, lucidChart );
-			},
-			desktop: true,
-			mobile: true,
-			VR: true
-		}
+
+// Debug obj - if debug.master = true, we'll flags what areas o the code to debug.
+var debug = { 
+	master: true, 
+/*	events: true, */
+	UI: { /*
+		browser: true, 
+		mixedReality: true  */ },
+/*	externalLoading: true,
+	renderer: true,
+	lucidChart: true, */
+	colorLib: true, 
+/*	scene: true, 
+	cameras: true, 
+	lights: true, 
+	axes: true, 
+	materials: true, 
+	math: true */
 };
 
 // lucidChart Entity Initialization
@@ -164,9 +161,9 @@ var UI = function( device ) {
 	UI.log = function() {
 				console.log( 'UI(): ', UI );
 		};
-	UI.desktop = function() {
+	UI.browser = function() {
 		
-		var self = UI.desktop;
+		var self = UI.browser;
 			
 			// DATA STATES
 		
@@ -230,26 +227,26 @@ var UI = function( device ) {
 					topAndBottomBound: {
 						isTrue: null,
 						bind: function() {
-							UI.desktop.inputs.color.top.change( function() { dispatchLoggedEvent( UI.desktop.events.boundTopColorChange );} );		
-							UI.desktop.inputs.color.bottom.change ( function() { dispatchLoggedEvent( UI.desktop.events.boundBottomColorChange ); } );
+							UI.browser.inputs.color.top.change( function() { dispatchLoggedEvent( UI.browser.events.boundTopColorChange );} );		
+							UI.browser.inputs.color.bottom.change ( function() { dispatchLoggedEvent( UI.browser.events.boundBottomColorChange ); } );
 							
-							UI.desktop.inputs.color.thresh.colorAbove.click( function( e ) { UI.desktop.inputs.color.thresh.topAndBottomBound.confirmUnbind( e ); } );
-							UI.desktop.inputs.color.thresh.colorBelow.click( function( e ) { UI.desktop.inputs.color.thresh.topAndBottomBound.confirmUnbind( e ); } );
+							UI.browser.inputs.color.thresh.colorAbove.click( function( e ) { UI.browser.inputs.color.thresh.topAndBottomBound.confirmUnbind( e ); } );
+							UI.browser.inputs.color.thresh.colorBelow.click( function( e ) { UI.browser.inputs.color.thresh.topAndBottomBound.confirmUnbind( e ); } );
 						},
 						listen: function() {
-							addEventListener( 'boundTopColorChange' , UI.desktop.inputs.color.thresh.topAndBottomBound.aboveThresh );
-							addEventListener( 'boundBottomColorChange' , UI.desktop.inputs.color.thresh.colorBelow );
-							UI.desktop.inputs.color.thresh.topAndBottomBound.isTrue = true;
+							addEventListener( 'boundTopColorChange' , UI.browser.inputs.color.thresh.topAndBottomBound.aboveThresh );
+							addEventListener( 'boundBottomColorChange' , UI.browser.inputs.color.thresh.colorBelow );
+							UI.browser.inputs.color.thresh.topAndBottomBound.isTrue = true;
 						},
 						unListen: function() {
-							removeEventListener( 'boundTopColorChange' , UI.desktop.inputs.color.thresh.topAndBottomBound.aboveThresh );
-							removeEventListener( 'boundBottomColorChange' , UI.desktop.inputs.color.thresh.colorBelow );
-							UI.desktop.inputs.color.thresh.topAndBottomBound.isTrue = false;
+							removeEventListener( 'boundTopColorChange' , UI.browser.inputs.color.thresh.topAndBottomBound.aboveThresh );
+							removeEventListener( 'boundBottomColorChange' , UI.browser.inputs.color.thresh.colorBelow );
+							UI.browser.inputs.color.thresh.topAndBottomBound.isTrue = false;
 						},
 						confirmUnbind: function( e ) {
 							if ( UI.sharedStates.thresholdColorsBound ) {
 								if (confirm('Changing the Below Min or Above Max colors manually will unbind them from the Top and Bottom Color settings. Proceed?') == true) {
-									UI.desktop.inputs.color.thresh.topAndBottomBound.unListen();
+									UI.browser.inputs.color.thresh.topAndBottomBound.unListen();
 									UI.sharedStates.thresholdColorsBound = false;
 									} 
 								else { 
@@ -337,7 +334,7 @@ var UI = function( device ) {
 
 				camPos: function() {
 					
-					var camera = scene.entities.cameras.perspCamera;
+					var camera = entities.cameras.perspCamera;
 					
 					self.inputs.camPos.x.attr('value', camera.position.x);
 					self.inputs.camPos.y.attr('value', camera.position.y);
@@ -370,15 +367,15 @@ var UI = function( device ) {
 
 				colorPicker: function() { // Formerly "static" 
 					
-					self.inputs.color.mono.val( '#' + scene.entities.materials.hexFromChannels ( scene.entities.materials.channelDecToHex ( chartSettings.color.monoColor.r ), scene.entities.materials.channelDecToHex ( chartSettings.color.monoColor.g ), scene.entities.materials.channelDecToHex (chartSettings.color.monoColor.b ) ) );
+					self.inputs.color.mono.val( '#' + entities.materials.hexFromChannels ( entities.materials.channelDecToHex ( chartSettings.color.monoColor.r ), entities.materials.channelDecToHex ( chartSettings.color.monoColor.g ), entities.materials.channelDecToHex (chartSettings.color.monoColor.b ) ) );
 					// Top Color
-					self.inputs.color.top.val( '#' + scene.entities.materials.hexFromChannels ( scene.entities.materials.channelDecToHex ( chartSettings.color.twoToneStops.top.r ), scene.entities.materials.channelDecToHex ( chartSettings.color.twoToneStops.top.g ), scene.entities.materials.channelDecToHex (chartSettings.color.twoToneStops.top.b ) ) );
+					self.inputs.color.top.val( '#' + entities.materials.hexFromChannels ( entities.materials.channelDecToHex ( chartSettings.color.twoToneStops.top.r ), entities.materials.channelDecToHex ( chartSettings.color.twoToneStops.top.g ), entities.materials.channelDecToHex (chartSettings.color.twoToneStops.top.b ) ) );
 					// Bottom Color
-					self.inputs.color.bottom.val( '#' + scene.entities.materials.hexFromChannels ( scene.entities.materials.channelDecToHex ( chartSettings.color.twoToneStops.bottom.r ), scene.entities.materials.channelDecToHex ( chartSettings.color.twoToneStops.bottom.g ), scene.entities.materials.channelDecToHex (chartSettings.color.twoToneStops.bottom.b ) ) );
+					self.inputs.color.bottom.val( '#' + entities.materials.hexFromChannels ( entities.materials.channelDecToHex ( chartSettings.color.twoToneStops.bottom.r ), entities.materials.channelDecToHex ( chartSettings.color.twoToneStops.bottom.g ), entities.materials.channelDecToHex (chartSettings.color.twoToneStops.bottom.b ) ) );
 					// colorAboveThreshold
-					self.inputs.color.thresh.colorAbove.val( '#' + scene.entities.materials.hexFromChannels ( scene.entities.materials.channelDecToHex ( chartSettings.color.thresh.colorAbove.r ), scene.entities.materials.channelDecToHex ( chartSettings.color.thresh.colorAbove.g ), scene.entities.materials.channelDecToHex (chartSettings.color.thresh.colorAbove.b ) ) );
+					self.inputs.color.thresh.colorAbove.val( '#' + entities.materials.hexFromChannels ( entities.materials.channelDecToHex ( chartSettings.color.thresh.colorAbove.r ), entities.materials.channelDecToHex ( chartSettings.color.thresh.colorAbove.g ), entities.materials.channelDecToHex (chartSettings.color.thresh.colorAbove.b ) ) );
 					// colorBelowThreshold
-					self.inputs.color.thresh.colorBelow.val( '#' + scene.entities.materials.hexFromChannels ( scene.entities.materials.channelDecToHex ( chartSettings.color.thresh.colorBelow.r ), scene.entities.materials.channelDecToHex ( chartSettings.color.thresh.colorBelow.g ), scene.entities.materials.channelDecToHex (chartSettings.color.thresh.colorBelow.b ) ) );
+					self.inputs.color.thresh.colorBelow.val( '#' + entities.materials.hexFromChannels ( entities.materials.channelDecToHex ( chartSettings.color.thresh.colorBelow.r ), entities.materials.channelDecToHex ( chartSettings.color.thresh.colorBelow.g ), entities.materials.channelDecToHex (chartSettings.color.thresh.colorBelow.b ) ) );
 
 				},
 				
@@ -483,11 +480,11 @@ var UI = function( device ) {
 				
 				var clickedString = 'Update button Clicked'; 
 				
-				debug.master && console.log ( clickedString );
+				debug.master && debug.UI.browser && console.log ( clickedString );
 				
 				lucidChart.update();
-				var camera = scene.entities.cameras.perspCamera;
-				scene.entities.cameras.position.update( camera );
+				var camera = entities.cameras.perspCamera;
+				entities.cameras.position.update( camera );
 				
 			};
 			
@@ -502,7 +499,7 @@ var UI = function( device ) {
 					} 
 				);
 
-			// What UI.desktop elements Have child fieldsets that show/hide when they're checked or unchecked?
+			// What UI.browser elements Have child fieldsets that show/hide when they're checked or unchecked?
 			
 			self.inputs.data.typeSelect.input.change(
 				function() {
@@ -698,7 +695,7 @@ var UI = function( device ) {
 				};
 			
 				// check if the threshold above/below colors are are still bound.					
-				if ( UI.desktop.inputs.color.thresh.topAndBottomBound.isTrue ) {						
+				if ( UI.browser.inputs.color.thresh.topAndBottomBound.isTrue ) {						
 					// if they are still bound, change the above & below thresh colors.	
 					chartSettings.color.thresh.setColorsAboveAndBelow();
 					// and update the UI.
@@ -739,20 +736,18 @@ var UI = function( device ) {
 			self.events.boundTopColorChange = new CustomEvent( 'boundTopColorChange' );
 			self.events.boundBottomColorChange = new CustomEvent( 'boundBottomColorChange' );
 
-			UI.desktop.inputs.color.thresh.topAndBottomBound.bind();
-			UI.desktop.inputs.color.thresh.topAndBottomBound.listen();
+			UI.browser.inputs.color.thresh.topAndBottomBound.bind();
+			UI.browser.inputs.color.thresh.topAndBottomBound.listen();
 			
 		}
 	};
 		
 
-	UI.VR = function(){}
-	
-	UI.mobile = function() {}
+	UI.mixedReality = function(){}
 	
 	// Call the UI for the appropriate device
 	UI[device]();
-	debug.master && UI.log();
+	debug.master && debug[device] && UI.log();
 	
 };
 
@@ -777,7 +772,7 @@ function init() {
 	scene.hardFramework();
 	scene.softFramework();
 
-	UI( 'desktop' );
+	UI( 'browser' );
 	
 	// Initialize the chart settings
 	lucidChart.init();
@@ -791,23 +786,23 @@ function init() {
 	// Create the Stereoscopic viewing object
 	var effect = new THREE.StereoEffect(renderer);
 		
-	debug.master && console.log ('About to call the render function' );
+	debug.master && debug.renderer && console.log ('About to call the render function' );
 	render();		  
-	debug.master && console.log ( 'Now Rendering' );
+	debug.master && debug.renderer && console.log ( 'Now Rendering' );
 }
 
 function render() {
 
 		requestAnimationFrame( render );
 		
-		UI.desktop.update.inputs.textAndNum();
-		UI.desktop.update.inputs.camPos();
+		UI.browser.update.inputs.textAndNum();
+		UI.browser.update.inputs.camPos();
 		
-		//scene.entities.geometries.dynamic.loadedFromExternal.mutated.meshAsLineDrawing.rotation.x += 0.03;
-		//scene.entities.geometries.dynamic.loadedFromExternal.mutated.meshAsLineDrawing.rotation.y += 0.03;
-		//scene.entities.geometries.dynamic.loadedFromExternal.mutated.meshAsLineDrawing.rotation.z += 0.01;
+		//entities.geometries.dynamic.loadedFromExternal.mutated.meshAsLineDrawing.rotation.x += 0.03;
+		//entities.geometries.dynamic.loadedFromExternal.mutated.meshAsLineDrawing.rotation.y += 0.03;
+		//entities.geometries.dynamic.loadedFromExternal.mutated.meshAsLineDrawing.rotation.z += 0.01;
 		
-		renderer.render(scene, scene.entities.cameras.perspCamera );
+		renderer.render(scene, entities.cameras.perspCamera );
 	}
 	
 
@@ -821,8 +816,8 @@ function initEventListeners() {
 	initDOMEvents();
 	// Initialize Event listeners for load-complete asynchronous events
 	initLoadEvents();
-	// Initialize DesktopUI Events
-	UI.desktop.events();	
+	// Initialize browserUI Events
+	UI.browser.events();	
 	// Listen for Device Orientation events.
 	initControlEvents();
 }
@@ -833,10 +828,10 @@ function initDOMEvents(){
 
 function initLoadEvents() {
 	addEventListener('objectFinishedLoading', function (e) { 
-		debug.master && console.log ( 'Caught the Custom Event: ' , e.detail.passedMesh ); 
-		scene.entities.geometries.dynamic.loadedFromExternal.bufferGeoms.passedMesh = e.detail.passedMesh;
-		debug.master && console.log ('Second Geometry Loaded: The Passed Mesh from OBJ', scene.entities.geometries.dynamic.loadedFromExternal.bufferGeoms.passedMesh );
-		makeLoadedGeometryLineDrawing( scene.entities.geometries.dynamic.loadedFromExternal.bufferGeoms.passedMesh );
+		debug.master && debug.externalLoading && console.log ( 'Caught the Custom Event: ' , e.detail.passedMesh ); 
+		entities.geometries.dynamic.loadedFromExternal.bufferGeoms.passedMesh = e.detail.passedMesh;
+		debug.master && debug.externalLoading && console.log ('Second Geometry Loaded: The Passed Mesh from OBJ', entities.geometries.dynamic.loadedFromExternal.bufferGeoms.passedMesh );
+		makeLoadedGeometryLineDrawing( entities.geometries.dynamic.loadedFromExternal.bufferGeoms.passedMesh );
 		
 		}, false);	
 }
@@ -852,28 +847,28 @@ function initControlEvents() {
 
 function cameras() {
 	
-	scene.entities.cameras = {
+	entities.cameras = {
 		perspCamera: new THREE.PerspectiveCamera( 90, window.innerWidth/window.innerHeight, 0.1, 1000 ),
 		position: {
 			init: function( camera ) {
 					camera.position.set( 0, 15, -5 );
 					camera.lookAt(new THREE.Vector3( 0, 15, 0 ));
 					camera.up = new THREE.Vector3( 0,1,0 );
-					debug.master && console.log ('Camera Position Initialized: ' , camera.position );
+					 debug.master && debug.cameras && console.log ('Camera Position Initialized: ' , camera.position );
 			},
 			update: function( camera ) {
 					
 					var newCamPos = {
-						x: UI.desktop.inputs.camPos.x.val(),
-						y: UI.desktop.inputs.camPos.y.val(),
-						z: UI.desktop.inputs.camPos.z.val(),
+						x: UI.browser.inputs.camPos.x.val(),
+						y: UI.browser.inputs.camPos.y.val(),
+						z: UI.browser.inputs.camPos.z.val(),
 					};
 					
-					debug.master && console.log ('New Camera Position: ' , newCamPos );
+					debug.master && debug.cameras && console.log ('New Camera Position: ' , newCamPos );
 					
 					camera.position.set( newCamPos.x, newCamPos.y, newCamPos.z );
 					
-					debug.master && console.log ('Camera Position Updated: ' , camera.position );
+					debug.master && debug.cameras && console.log ('Camera Position Updated: ' , camera.position );
 			}
 		}
 	}
@@ -891,28 +886,28 @@ function initRenderer() {
 	
 }
 
-// if the device we're using has 'alpha' attribute, then it's a VR-compatible mobile browser...
+// if the device we're using has 'alpha' attribute, then it's a mixedReality-compatible mobile browser...
 function setOrientationControls(e) {
 	if (e.alpha) {
 		initVRControls ();
 	}
 	else {
-		initDesktopControls ();
-		var camera = scene.entities.cameras.perspCamera;
-		scene.entities.cameras.position.init( camera );
+		initbrowserControls ();
+		var camera = entities.cameras.perspCamera;
+		entities.cameras.position.init( camera );
 	}
 }
 	
-function initDesktopControls() {
+function initbrowserControls() {
 	
 	// Create the Mouse-Based Controls - Hold down left mouse button and move around the window...
 	
-	var camera = scene.entities.cameras.perspCamera;
+	var camera = entities.cameras.perspCamera;
 	
 	var controls;
 
-	scene.entities.desktopControls = new THREE.OrbitControls ( camera , container );
-	controls = scene.entities.desktopControls;
+	entities.browserControls = new THREE.OrbitControls ( camera , container );
+	controls = entities.browserControls;
 	
 	controls.target.set(
 		camera.position.x + 0.15,
@@ -926,11 +921,11 @@ function initDesktopControls() {
 
 function initVRControls() {
 	
-	var camera = scene.entities.cameras.perspCamera;
+	var camera = entities.cameras.perspCamera;
 	var controls;
 	
-	scene.entities.VRControls = new THREE.DeviceOrientationControls(camera, true);
-	controls = scene.entities.VRControls;
+	entities.VRControls = new THREE.DeviceOrientationControls(camera, true);
+	controls = entities.VRControls;
 	
 	controls.connect();
 	controls.update();
@@ -941,19 +936,19 @@ function initVRControls() {
 
 function lights() {
 	
-	scene.entities.lights = {
+	entities.lights = {
 		
 		pureWhiteLight: new THREE.PointLight(0xffffff, 7, 1000),
 		pureWhiteLight2: new THREE.PointLight(0xffffff, 7, 1000),
 	};
 
-	scene.entities.lights.pureWhiteLight.position.set(500,500,500);
-	scene.entities.lights.pureWhiteLight2.position.set(-500,500,-500);
+	entities.lights.pureWhiteLight.position.set(500,500,500);
+	entities.lights.pureWhiteLight2.position.set(-500,500,-500);
 
-	scene.add(scene.entities.lights.pureWhiteLight);
-	scene.add(scene.entities.lights.pureWhiteLight2);
+	scene.add(entities.lights.pureWhiteLight);
+	scene.add(entities.lights.pureWhiteLight2);
 	
-	debug.master && console.log ( 'lights(): ', scene.entities.lights );
+	debug.master && debug.lights && console.log ( 'lights(): ', entities.lights );
 }
 
 /* AXES HANDLING */
@@ -961,7 +956,7 @@ function lights() {
 function axes( extents , rulers ) {
 	// Setup the Axes
 	
-	scene.entities.axes = {
+	entities.axes = {
 		x: new THREE.Geometry(),
 		y: new THREE.Geometry(),
 		z: new THREE.Geometry(),
@@ -986,7 +981,7 @@ function axes( extents , rulers ) {
 			
 			var rulerPoints;
 			
-			scene.entities.axes.rulers[axis] = new THREE.BufferGeometry();
+			entities.axes.rulers[axis] = new THREE.BufferGeometry();
 			
 			var positions = new Float32Array( extents * 2 * 3 ); 
 			
@@ -1013,61 +1008,61 @@ function axes( extents , rulers ) {
 					}
 				}
 				
-			scene.entities.axes.rulers[axis].addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
-			scene.entities.axes.rulers[axis].computeBoundingSphere();
+			entities.axes.rulers[axis].addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+			entities.axes.rulers[axis].computeBoundingSphere();
 			
-			var rulerPointMaterial = new THREE.PointsMaterial( { size: 0.1, color: scene.entities.axes.color[axis] } );
+			var rulerPointMaterial = new THREE.PointsMaterial( { size: 0.1, color: entities.axes.color[axis] } );
 			
-			rulerPoints = new THREE.Points( scene.entities.axes.rulers[axis], rulerPointMaterial );
+			rulerPoints = new THREE.Points( entities.axes.rulers[axis], rulerPointMaterial );
 			scene.add( rulerPoints );
 		},
 		draw: function( axis ) {
 			
-			scene.entities.axes.x.vertices.push(
+			entities.axes.x.vertices.push(
 				new THREE.Vector3( -extents, 0, 0 ),
 				new THREE.Vector3( extents, 0, 0 )
 			);
 			
-			scene.entities.axes.y.vertices.push(
+			entities.axes.y.vertices.push(
 				new THREE.Vector3( 0, -extents, 0 ),
 				new THREE.Vector3( 0, extents, 0 )
 			);
 			
-			scene.entities.axes.z.vertices.push(
+			entities.axes.z.vertices.push(
 				new THREE.Vector3( 0, 0, -extents ),
 				new THREE.Vector3( 0, 0, extents )
 			);
 			
 			// Draw the Axes with their Materials
 
-			var xAxis = new THREE.Line( scene.entities.axes.x, scene.entities.axes.material.x );
-			var yAxis = new THREE.Line( scene.entities.axes.y, scene.entities.axes.material.y );
-			var zAxis = new THREE.Line( scene.entities.axes.z, scene.entities.axes.material.z );
+			var xAxis = new THREE.Line( entities.axes.x, entities.axes.material.x );
+			var yAxis = new THREE.Line( entities.axes.y, entities.axes.material.y );
+			var zAxis = new THREE.Line( entities.axes.z, entities.axes.material.z );
 			
 			scene.add( xAxis );
 			scene.add( yAxis );
 			scene.add( zAxis );
 			
 			if (rulers === true ) {
-				scene.entities.axes.rulers( 'x' , extents, 1 );
-				scene.entities.axes.rulers( 'y' , extents, 1 );
-				scene.entities.axes.rulers( 'z' , extents, 1 );
+				entities.axes.rulers( 'x' , extents, 1 );
+				entities.axes.rulers( 'y' , extents, 1 );
+				entities.axes.rulers( 'z' , extents, 1 );
 			};			
 		}
 	};
 	
-	scene.entities.axes.draw();
+	entities.axes.draw();
 	
-	debug.master && console.log ( 'axes(): ', scene.entities.axes );  
+	debug.master && debug.axes && console.log ( 'axes(): ', entities.axes );  
 }
 
 /******* COLOR & MATERIALS HANDLING */
 
 function materials() {
 	
-	scene.entities.materials = {
+	entities.materials = {
 		hexRGBName: function( r, g, b, a = 1, type ) {			
-			var hexRGB = scene.entities.materials.hexFromChannels ( scene.entities.materials.channelDecToHex(r).toString(16) , scene.entities.materials.channelDecToHex(g).toString(16) , scene.entities.materials.channelDecToHex(b).toString(16) ) + '_alpha' + a + '_' + type;
+			var hexRGB = entities.materials.hexFromChannels ( entities.materials.channelDecToHex(r).toString(16) , entities.materials.channelDecToHex(g).toString(16) , entities.materials.channelDecToHex(b).toString(16) ) + '_alpha' + a + '_' + type;
 			return hexRGB;
 		},
 		hexToDec( hexInputString ) {	
@@ -1114,9 +1109,9 @@ function materials() {
 			},
 			phong: {
 				load: function( r, g, b, a ) {	
-					var hexRGB = scene.entities.materials.hexRGBName( r, g, b, a, 'phong' );
+					var hexRGB = entities.materials.hexRGBName( r, g, b, a, 'phong' );
 					// Check whether the material already exists. If it does, load it; if not create it.
-					var loadMtl = scene.entities.materials[hexRGB] || scene.entities.materials.solid.phong.init( r, g, b, a );
+					var loadMtl = entities.materials[hexRGB] || entities.materials.solid.phong.init( r, g, b, a );
 					return loadMtl;
 				},
 				init: function( r, g, b, a ) {
@@ -1124,15 +1119,15 @@ function materials() {
 					var mtlColor = new THREE.Color('rgb(' + r + ',' + g + ',' + b + ')');
 					var mtlSpecColor = new THREE.Color(
 						'rgb(' + 
-						scene.entities.materials.solid.specularColor( r , 127 ) + 
+						entities.materials.solid.specularColor( r , 127 ) + 
 						',' + 
-						scene.entities.materials.solid.specularColor( g , 127 ) + 
+						entities.materials.solid.specularColor( g , 127 ) + 
 						',' + 
-						scene.entities.materials.solid.specularColor( b , 127 ) + 
+						entities.materials.solid.specularColor( b , 127 ) + 
 						')');
-					var hexRGB = scene.entities.materials.hexRGBName( r, g, b, a, 'phong' );
+					var hexRGB = entities.materials.hexRGBName( r, g, b, a, 'phong' );
 						
-					scene.entities.materials[hexRGB] = new THREE.MeshPhongMaterial (
+					entities.materials[hexRGB] = new THREE.MeshPhongMaterial (
 						{
 							color: mtlColor,
 							specular: mtlSpecColor,
@@ -1141,34 +1136,34 @@ function materials() {
 							name: hexRGB 
 							} ); 
 
-					debug.master && console.log ( 'Dynamic Material Loaded' , scene.entities.materials[hexRGB] );
-					return scene.entities.materials[hexRGB];
+					debug.master && debug.materials && console.log ( 'Dynamic Material Loaded' , entities.materials[hexRGB] );
+					return entities.materials[hexRGB];
 				}
 			}
 		},
 		fromColor: function( color, pickBy ){
 			
 			var pickedColor = color.palette.colorArray[pickBy];
-			var material = scene.entities.materials.solid.phong.load( pickedColor.r, pickedColor.g , pickedColor.b );
+			var material = entities.materials.solid.phong.load( pickedColor.r, pickedColor.g , pickedColor.b );
 			
 			return material;
 			
 		}
 	};
 		
-	debug.master && console.log ( 'materials(): ' , scene.entities.materials );
+	debug.master && debug.materials && console.log ( 'materials(): ' , entities.materials );
 }
 
 /******* GEOMETRIES HANDLING */
 
 function initGeometries() {
 	
-	scene.entities.geometries = {
+	entities.geometries = {
 		constant: {
 			ground: function( xSize = 2000 , zSize = 2000 , heightOffset = -0.001, opacity = 0.5 ) { 
 				
 				var groundBuffer = new THREE.PlaneBufferGeometry( xSize, zSize, 1 );
-				var groundMesh = new THREE.Mesh( groundBuffer , scene.entities.materials.ground );
+				var groundMesh = new THREE.Mesh( groundBuffer , entities.materials.ground );
 				
 				groundMesh.rotation.x = Math.PI / 2;
 				groundMesh.position.y = heightOffset;
@@ -1185,14 +1180,14 @@ function initGeometries() {
 	}
 	
 	//	Render the Ground
-	scene.entities.geometries.constant.ground();
+	entities.geometries.constant.ground();
 
 	// Generate the chart	
 	lucidChart( chartSettings, 'chart1' );
 
 	// Process the geometries whose load-speed we have control over. The loadedGeometries from external sources we'll handle with the objectFinishedLoading event.
-	//scene.utils.geometries.fromExternal.OBJ( 'assets/objects/v4-icosahedron-simplest.obj' );
-	//scene.utils.geometries.mutate();
+	//utils.geometries.fromExternal.OBJ( 'assets/objects/v4-icosahedron-simplest.obj' );
+	//utils.geometries.mutate();
 	
 }
 
@@ -1202,23 +1197,23 @@ function initGeometries() {
 var lucidChart = function( chartSettings, name ) { /* takes chartsettings object as param 1 */
 
 	lucidChart.chartName = name || 'chart1';
-	lucidChart.parent = scene.utils.entityParent( lucidChart.chartName );
+	lucidChart.parent = utils.entity.parentEntity( lucidChart.chartName );
 
 	lucidChart.type = {
 		bar: function( x, z, yHeight, thickness = 0.5 ) {
 		
 			var bar = new THREE.BoxGeometry( thickness, yHeight , thickness );
-			scene.entities.geometries.dynamic.chart[x][z] = new THREE.Mesh( bar );
+			entities.geometries.dynamic.chart[x][z] = new THREE.Mesh( bar );
 
-			scene.entities.geometries.dynamic.chart[x][z].name = 'lucidChartx' + x + 'z' + z;
-			scene.entities.geometries.dynamic.chart[x][z].material = chartSettings.color.func( chartSettings, yHeight );	// Pick the material based on the color function
-			scene.entities.geometries.dynamic.chart[x][z].material.side = lucidChart.color.materialSides;
-			scene.entities.geometries.dynamic.chart[x][z].castShadow = true;
-			scene.entities.geometries.dynamic.chart[x][z].position.x = x;
-			scene.entities.geometries.dynamic.chart[x][z].position.y = yHeight/2;
-			scene.entities.geometries.dynamic.chart[x][z].position.z = z;
+			entities.geometries.dynamic.chart[x][z].name = 'lucidChartx' + x + 'z' + z;
+			entities.geometries.dynamic.chart[x][z].material = chartSettings.color.func( chartSettings, yHeight );	// Pick the material based on the color function
+			entities.geometries.dynamic.chart[x][z].material.side = lucidChart.color.materialSides;
+			entities.geometries.dynamic.chart[x][z].castShadow = true;
+			entities.geometries.dynamic.chart[x][z].position.x = x;
+			entities.geometries.dynamic.chart[x][z].position.y = yHeight/2;
+			entities.geometries.dynamic.chart[x][z].position.z = z;
 			
-			lucidChart.parent.add(scene.entities.geometries.dynamic.chart[x][z]);	
+			lucidChart.parent.add(entities.geometries.dynamic.chart[x][z]);	
 		}
 	};	
 	
@@ -1275,7 +1270,7 @@ var lucidChart = function( chartSettings, name ) { /* takes chartsettings object
 				if ( chartSettings.math.dataType === 'equation') {
 					
 					chartSettings.math.heightFunc = lucidChart.math.func.preset.dict;   // The math Function dictionary;
-					chartSettings.math.demoEquation = UI.desktop.inputs.data.equation.select.val() || this.demoEquation;	// If using one of the demo equations, the equation select sets which one to use.
+					chartSettings.math.demoEquation = UI.browser.inputs.data.equation.select.val() || this.demoEquation;	// If using one of the demo equations, the equation select sets which one to use.
 				}
 			} 
 		},
@@ -1322,20 +1317,20 @@ var lucidChart = function( chartSettings, name ) { /* takes chartsettings object
 				};
 				
 				/* logic from currentStates (refactor later to avoid repeat) */
-				var dataTypeRandom = UI.desktop.inputs.data.typeSelect.random.is(':checked');
-				var dataTypeEquation = UI.desktop.inputs.data.typeSelect.equation.is(':checked');
+				var dataTypeRandom = UI.browser.inputs.data.typeSelect.random.is(':checked');
+				var dataTypeEquation = UI.browser.inputs.data.typeSelect.equation.is(':checked');
 				
 				// Get the initial colormode
-				var colorModeRandom = UI.desktop.inputs.color.modeSelect.random.is(':checked');
-				var colorModeByHeight = UI.desktop.inputs.color.modeSelect.byHeight.is(':checked');
-				var colorModeMono = UI.desktop.inputs.color.modeSelect.mono.is(':checked');
+				var colorModeRandom = UI.browser.inputs.color.modeSelect.random.is(':checked');
+				var colorModeByHeight = UI.browser.inputs.color.modeSelect.byHeight.is(':checked');
+				var colorModeMono = UI.browser.inputs.color.modeSelect.mono.is(':checked');
 				
 				// Get the initial gradientType
-				var gradientTypeTwoTone = UI.desktop.inputs.color.gradientSelect.twoTone.is(':checked');
-				var gradientTypeRainbow = UI.desktop.inputs.color.gradientSelect.rainbow.is(':checked');
+				var gradientTypeTwoTone = UI.browser.inputs.color.gradientSelect.twoTone.is(':checked');
+				var gradientTypeRainbow = UI.browser.inputs.color.gradientSelect.rainbow.is(':checked');
 				
 				// Get the initial hasThresholds state
-				var hasThresholds = UI.desktop.inputs.color.thresh.isOn.input.is(':checked');				
+				var hasThresholds = UI.browser.inputs.color.thresh.isOn.input.is(':checked');				
 								
 				var maxThresh, minThresh;
 				
@@ -1394,7 +1389,7 @@ var lucidChart = function( chartSettings, name ) { /* takes chartsettings object
 					
 					}
 				
-				debug.master && console.log( 'lucidChart.color.heightZones.set(): ' ,  chartSettings.color.heightZones );
+				debug.master && debug.lucidChart && console.log( 'lucidChart.color.heightZones.set(): ' ,  chartSettings.color.heightZones );
 			},
 			clear: function( chartSettings ) {		
 				chartSettings.color.heightZones = {
@@ -1404,7 +1399,7 @@ var lucidChart = function( chartSettings, name ) { /* takes chartsettings object
 					zone: []
 				};
 				
-				debug.master && console.log( 'lucidChart.color.heightZones.set(): ' , chartSettings.color.heightZones );
+				debug.master && debug.lucidChart && console.log( 'lucidChart.color.heightZones.set(): ' , chartSettings.color.heightZones );
 			}
 		},
 		minMaxThresh:{
@@ -1416,10 +1411,10 @@ var lucidChart = function( chartSettings, name ) { /* takes chartsettings object
 				UI: function(){
 			
 					if (chartSettings.color.thresh.isOn === true) {
-							chartSettings.color.thresh.min = parseInt(UI.desktop.inputs.color.thresh.min.val()) || 0;
-							chartSettings.color.thresh.max = parseInt(UI.desktop.inputs.color.thresh.max.val()) || 0;
-							UI.desktop.inputs.color.thresh.min.val( chartSettings.color.thresh.min );
-							UI.desktop.inputs.color.thresh.max.val( chartSettings.color.thresh.max );
+							chartSettings.color.thresh.min = parseInt(UI.browser.inputs.color.thresh.min.val()) || 0;
+							chartSettings.color.thresh.max = parseInt(UI.browser.inputs.color.thresh.max.val()) || 0;
+							UI.browser.inputs.color.thresh.min.val( chartSettings.color.thresh.min );
+							UI.browser.inputs.color.thresh.max.val( chartSettings.color.thresh.max );
 					}
 					
 					else { lucidChart.color.minMaxThresh.reset(); };
@@ -1453,8 +1448,8 @@ var lucidChart = function( chartSettings, name ) { /* takes chartsettings object
 
 					chartSettings.color.thresh.min = undefined;
 					chartSettings.color.thresh.max = undefined;
-					UI.desktop.inputs.color.thresh.min.val( '' );
-					UI.desktop.inputs.color.thresh.max.val( '' );
+					UI.browser.inputs.color.thresh.min.val( '' );
+					UI.browser.inputs.color.thresh.max.val( '' );
 			
 			},
 			colorOutside: function( chartSettings, yHeight ) {
@@ -1480,16 +1475,16 @@ var lucidChart = function( chartSettings, name ) { /* takes chartsettings object
 						
 					};
 			
-				yHeight >= lucidChart.color.minMaxThresh.setVia.integration.max ? mtl = scene.entities.materials.solid.phong.load ( colorAboveThreshold.r , colorAboveThreshold.g , colorAboveThreshold.b ) : false;
-				yHeight <= lucidChart.color.minMaxThresh.setVia.integration.max ? mtl = scene.entities.materials.solid.phong.load ( colorBelowThreshold.r , colorBelowThreshold.g , colorBelowThreshold.b ) : false;
+				yHeight >= lucidChart.color.minMaxThresh.setVia.integration.max ? mtl = entities.materials.solid.phong.load ( colorAboveThreshold.r , colorAboveThreshold.g , colorAboveThreshold.b ) : false;
+				yHeight <= lucidChart.color.minMaxThresh.setVia.integration.max ? mtl = entities.materials.solid.phong.load ( colorBelowThreshold.r , colorBelowThreshold.g , colorBelowThreshold.b ) : false;
 				
-				debug.master && console.log ( 'Chart Element ( x ', x, ', z', z, ') y = ', yHeight ,' . Out of Range. Assigned Material = ', mtl );
+				debug.master && debug.colorLib && console.log ( 'Chart Element ( x ', x, ', z', z, ') y = ', yHeight ,' . Out of Range. Assigned Material = ', mtl );
 				return mtl;
 			}			
 		}
 	}
 	
-	scene.entities.geometries.dynamic.chart = [];   // Set up the chart object 
+	entities.geometries.dynamic.chart = [];   // Set up the chart object 
 	
 	var yHeight;
 	
@@ -1520,7 +1515,7 @@ var lucidChart = function( chartSettings, name ) { /* takes chartsettings object
 	
 	for (x = lucidChart.data.range.start.x; x < (lucidChart.data.count.x + lucidChart.data.range.start.x); x++) {
 		
-		scene.entities.geometries.dynamic.chart[x] = [];
+		entities.geometries.dynamic.chart[x] = [];
 		
 		chartSettings.math.xIterator = x;
 		
@@ -1543,8 +1538,8 @@ var lucidChart = function( chartSettings, name ) { /* takes chartsettings object
 	}
 	
 	// For Debugging of the Chart;
-	debug.master && console.log ( 'lucidChart(): Max Height: ', chartSettings.math.generatedHeight.max, ' Min Height: ' , chartSettings.math.generatedHeight.min );
-	debug.master && console.log ( 'lucidChart(): Rendered Chart: ' , scene.entities.geometries.dynamic.chart );
+	debug.master && debug.lucidChart && console.log ( 'lucidChart(): Max Height: ', chartSettings.math.generatedHeight.max, ' Min Height: ' , chartSettings.math.generatedHeight.min );
+	debug.master && debug.lucidChart && console.log ( 'lucidChart(): Rendered Chart: ' , entities.geometries.dynamic.chart );
 };
 
 // Values passed for lucidChart creation and render on app load.
@@ -1609,12 +1604,12 @@ lucidChart.init = function() {
 				g: 255, 
 				b: 255
 				},
-			twoToneStops: scene.entities.colorLib.stops.preset.twoTone(),
-			rainbowStops: scene.entities.colorLib.stops.preset.rainbow(),
-			grayScaleStops: scene.entities.colorLib.stops.preset.grayScale(),
+			twoToneStops: entities.colorLib.stops.preset.twoTone(),
+			rainbowStops: entities.colorLib.stops.preset.rainbow(),
+			grayScaleStops: entities.colorLib.stops.preset.grayScale(),
 			gradientType: 'twoTone',
 			palette: { 
-				//We'll fill this empty object with values using the scene.entities.colorLib.generate function below.
+				//We'll fill this empty object with values using the entities.colorLib.generate function below.
 				activeColorStops: chartSettings.color.twoToneStops
 			},
 			thresh: {
@@ -1627,8 +1622,8 @@ lucidChart.init = function() {
 					isTrue: true
 				},
 				setColorsAboveAndBelow: function(){
-					chartSettings.color.thresh.colorBelow = scene.entities.colorLib.stops.get.first( chartSettings.color.palette.activeColorStops );
-					chartSettings.color.thresh.colorAbove = scene.entities.colorLib.stops.get.last( chartSettings.color.palette.activeColorStops );
+					chartSettings.color.thresh.colorBelow = entities.colorLib.stops.get.first( chartSettings.color.palette.activeColorStops );
+					chartSettings.color.thresh.colorAbove = entities.colorLib.stops.get.last( chartSettings.color.palette.activeColorStops );
 				} 
 			},
 			materialSides: THREE.DoubleSide, // Which way to have the normals face?
@@ -1645,7 +1640,7 @@ lucidChart.init = function() {
 	chartSettings.color.getCount();
 	
 	// Generate the library of colors we'll use based on the present defaults above.
-	scene.entities.colorLib.generate( chartSettings ); 
+	entities.colorLib.generate( chartSettings ); 
 	
 	chartSettings.color.thresh.setColorsAboveAndBelow();
 	
@@ -1659,30 +1654,30 @@ lucidChart.init = function() {
 	
 	chartSettings.appearanceOptions.getBarThickness();
 	
-	UI.desktop.update.inputs.slider();
-	UI.desktop.update.inputs.radioAndCheck();
-	UI.desktop.update.inputs.selectAndText();
-	UI.desktop.update.inputs.colorPicker();
-	UI.desktop.update.inputs.currentStates();
+	UI.browser.update.inputs.slider();
+	UI.browser.update.inputs.radioAndCheck();
+	UI.browser.update.inputs.selectAndText();
+	UI.browser.update.inputs.colorPicker();
+	UI.browser.update.inputs.currentStates();
 	
 }
 
 // Values collected and passed on user clicking the Update button.
 lucidChart.update = function() {
 	
-	chartSettings.data.range.start.x = parseInt(UI.desktop.inputs.data.range.start.x.val()) || 0;
-	chartSettings.data.range.start.z = parseInt(UI.desktop.inputs.data.range.start.z.val()) || 0; 
+	chartSettings.data.range.start.x = parseInt(UI.browser.inputs.data.range.start.x.val()) || 0;
+	chartSettings.data.range.start.z = parseInt(UI.browser.inputs.data.range.start.z.val()) || 0; 
 //	chartSettings.data.xRangeEnd = ( chartSettings.data.range.start.x + chartSettings.data.count.x );
 //	chartSettings.data.zRangeEnd = ( chartSettings.data.range.start.z + chartSettings.data.count.z );
-	chartSettings.data.range.end.x = parseInt(UI.desktop.inputs.data.range.end.x.val()) || 0;
-	chartSettings.data.range.end.z = parseInt(UI.desktop.inputs.data.range.end.z.val()) || 0; 
+	chartSettings.data.range.end.x = parseInt(UI.browser.inputs.data.range.end.x.val()) || 0;
+	chartSettings.data.range.end.z = parseInt(UI.browser.inputs.data.range.end.z.val()) || 0; 
 	chartSettings.data.count.x();
 	chartSettings.data.count.z();
 
 	lucidChart.data.mode.update();    // Set dynamically interrelated variables.
 	
-	chartSettings.math.minUserSetHeight = parseInt(UI.desktop.inputs.data.random.height.min.val()) || 0;
-	chartSettings.math.maxUserSetHeight = parseInt(UI.desktop.inputs.data.random.height.max.val()) || 0;
+	chartSettings.math.minUserSetHeight = parseInt(UI.browser.inputs.data.random.height.min.val()) || 0;
+	chartSettings.math.maxUserSetHeight = parseInt(UI.browser.inputs.data.random.height.max.val()) || 0;
 	chartSettings.math.heightRoot = 2;
 	chartSettings.math.exponent = 0.3;
 	chartSettings.math.renderCapAsApproachesInfinity = true; 		// Cap an element if it's height approaches infinity?
@@ -1694,38 +1689,38 @@ lucidChart.update = function() {
 	
 	lucidChart.color.mode.update();    											// Set dynamically interrelated variables.		
 	
-	chartSettings.color.countRawVal = parseInt(UI.desktop.inputs.color.countRawVal.val()) || 1;	
+	chartSettings.color.countRawVal = parseInt(UI.browser.inputs.color.countRawVal.val()) || 1;	
 	chartSettings.color.getCount();
-	chartSettings.color.monoColor = scene.entities.materials.hexToDec ( UI.desktop.inputs.color.mono.val() );
-	chartSettings.color.twoToneStops.top = scene.entities.materials.hexToDec ( UI.desktop.inputs.color.top.val() );
-	chartSettings.color.twoToneStops.bottom = scene.entities.materials.hexToDec ( UI.desktop.inputs.color.bottom.val() );
+	chartSettings.color.monoColor = entities.materials.hexToDec ( UI.browser.inputs.color.mono.val() );
+	chartSettings.color.twoToneStops.top = entities.materials.hexToDec ( UI.browser.inputs.color.top.val() );
+	chartSettings.color.twoToneStops.bottom = entities.materials.hexToDec ( UI.browser.inputs.color.bottom.val() );
 	
 	lucidChart.color.gradientType.update();
-	chartSettings.color.thresh.isOn = UI.desktop.inputs.color.thresh.isOn.input.is(':checked');
-	chartSettings.color.thresh.colorAbove = scene.entities.materials.hexToDec ( UI.desktop.inputs.color.thresh.colorAbove.val() );
-	chartSettings.color.thresh.colorBelow = scene.entities.materials.hexToDec ( UI.desktop.inputs.color.thresh.colorBelow.val() );
+	chartSettings.color.thresh.isOn = UI.browser.inputs.color.thresh.isOn.input.is(':checked');
+	chartSettings.color.thresh.colorAbove = entities.materials.hexToDec ( UI.browser.inputs.color.thresh.colorAbove.val() );
+	chartSettings.color.thresh.colorBelow = entities.materials.hexToDec ( UI.browser.inputs.color.thresh.colorBelow.val() );
 
-	lucidChart.color.minMaxThresh.setVia.UI();	// assign the color thresholds from the DesktopUI or set them as undefined depending on whether hasMinMaxColorThreshold is checked.
+	lucidChart.color.minMaxThresh.setVia.UI();	// assign the color thresholds from the browserUI or set them as undefined depending on whether hasMinMaxColorThreshold is checked.
 	
 	chartSettings.color.materialSides = THREE.DoubleSide; // Which way to have the normals face?
 
-	scene.entities.colorLib.generate( chartSettings );
+	entities.colorLib.generate( chartSettings );
 	
-	chartSettings.appearanceOptions.barThicknessRawVal = parseInt(UI.desktop.inputs.appearanceOptions.barThicknessRawVal.val()) || 2;
+	chartSettings.appearanceOptions.barThicknessRawVal = parseInt(UI.browser.inputs.appearanceOptions.barThicknessRawVal.val()) || 2;
 	chartSettings.appearanceOptions.getBarThickness();
 	
-	debug.master && console.log ( 'chartSettings after lucidChart.update(): ', chartSettings );
+	debug.master && debug.lucidChart && console.log ( 'chartSettings after lucidChart.update(): ', chartSettings );
 	
-	scene.utils.entityDelete( 'chart1' );
+	utils.entity.remove( 'chart1' );
 	
 	lucidChart( chartSettings, 'chart1' );
 	
-	UI.desktop.update.inputs.textAndNum();
-	UI.desktop.update.inputs.slider();
-	UI.desktop.update.inputs.camPos();
-	UI.desktop.update.inputs.radioAndCheck();
-	UI.desktop.update.inputs.selectAndText();
-	UI.desktop.update.inputs.colorPicker();
+	UI.browser.update.inputs.textAndNum();
+	UI.browser.update.inputs.slider();
+	UI.browser.update.inputs.camPos();
+	UI.browser.update.inputs.radioAndCheck();
+	UI.browser.update.inputs.selectAndText();
+	UI.browser.update.inputs.colorPicker();
 }
 
 lucidChart.math = {
@@ -1829,7 +1824,7 @@ lucidChart.colorFunc = {
 	random: function( chartSettings) {
 		var cCount = chartSettings.color.count || 11; // Default 12 Colors
 		var rndColorIndex = Math.floor(Math.random() * cCount ); // Pick how many Colors in the Scheme;
-		var material = scene.entities.materials.fromColor( chartSettings.color, rndColorIndex );
+		var material = entities.materials.fromColor( chartSettings.color, rndColorIndex );
 
 		return material;
 	},
@@ -1843,11 +1838,11 @@ lucidChart.colorFunc = {
 		for ( j = 0; j < chartSettings.color.heightZones.count; j++ ) {
 				
 			if ( y >= chartSettings.color.heightZones.zone[j].min && y <= chartSettings.color.heightZones.zone[j].max )  { 
-				material = scene.entities.materials.fromColor( chartSettings.color, j );
-				debug.master && console.log ('Chart Element ( x ', x, ', z', z, ') y = ', yHeight ,' . In zone ', j , '(min: ', chartSettings.color.heightZones.zone[j].min,', max: ', chartSettings.color.heightZones.zone[j].max,'). Assigned Material = ', material );
+				material = entities.materials.fromColor( chartSettings.color, j );
+				debug.master && debug.lucidChart && console.log ('Chart Element ( x ', x, ', z', z, ') y = ', yHeight ,' . In zone ', j , '(min: ', chartSettings.color.heightZones.zone[j].min,', max: ', chartSettings.color.heightZones.zone[j].max,'). Assigned Material = ', material );
 				break;
 				}
-			else debug.master && console.log ('Chart Element ( x ', x, ', z', z, ') y = ', yHeight ,' . Not in zone ', j , '(min: ', chartSettings.color.heightZones.zone[j].min,', max: ', chartSettings.color.heightZones.zone[j].max,'). Trying next zone' );
+			else debug.master && debug.lucidChart && console.log ('Chart Element ( x ', x, ', z', z, ') y = ', yHeight ,' . Not in zone ', j , '(min: ', chartSettings.color.heightZones.zone[j].min,', max: ', chartSettings.color.heightZones.zone[j].max,'). Trying next zone' );
 			
 			}
 		
@@ -1857,7 +1852,7 @@ lucidChart.colorFunc = {
 		return material; 		
 	},
 	monoChrome: function() {
-		var material = scene.entities.materials.solid.phong.load ( chartSettings.color.monoColor.r , chartSettings.color.monoColor.g , chartSettings.color.monoColor.b );	
+		var material = entities.materials.solid.phong.load ( chartSettings.color.monoColor.r , chartSettings.color.monoColor.g , chartSettings.color.monoColor.b );	
 		return material;		
 	}
 };
@@ -1867,13 +1862,13 @@ lucidChart.colorFunc = {
 
 /****** DYNAMIC COLOR LIBRARY GENERATION & PRELOAD ******/
 
-scene.entities.colorLib = {
+entities.colorLib = {
 	
 	generate: function( chartSettings ) {
 	
 		var colorCount = chartSettings.color.count;
 		var colorStops = chartSettings.color[chartSettings.color.gradientType + 'Stops'];
-		var stopsCount = scene.entities.colorLib.stops.get.count( colorStops );   // # color stops.	If stops = "red, orange, yellow, green", then 4.
+		var stopsCount = entities.colorLib.stops.get.count( colorStops );   // # color stops.	If stops = "red, orange, yellow, green", then 4.
 		var octaveCount = stopsCount -1;										  // # color stops, minus the last. If 4 stops, then 3.
 		var colorsPerOctave = Math.floor( colorCount / octaveCount )			  // # colors in each octave. If 14 colors and 3 octaves, then 4 (14/3 = 4.67) -> Math.floor(4.67) = 4
 		var modulo = colorCount % octaveCount;									  // # left over after all octaves have been subtracted. If 14 colors and 3 octaves then 2 ( 14 = 12-2 -> 12/3...)
@@ -1897,9 +1892,9 @@ scene.entities.colorLib = {
 		chartSettings.color.palette.colorsPerOctave = colorsPerOctave;
 		chartSettings.color.palette.modulo = modulo;
 		
-		chartSettings.color.palette.colorArray = scene.entities.colorLib.asArray.populate( chartSettings );
+		chartSettings.color.palette.colorArray = entities.colorLib.asArray.populate( chartSettings );
 		
-		debug.master && console.log ('scene.entities.colorLib.generate(): ',  chartSettings.color );
+		debug.master && debug.colorLib && console.log ('entities.colorLib.generate(): ',  chartSettings.color );
 	},
 	stops: {
 		preset: {
@@ -1954,7 +1949,7 @@ scene.entities.colorLib = {
 				
 				var firstStop = stopSetObj[Object.keys(stopSetObj)[0]]; 
 				
-				debug.master && console.log( 'lucidChart.stops.get.first(): ', firstStop );
+				debug.master && debug.colorLib && console.log( 'lucidChart.color.stops.get.first(): ', firstStop );
 				
 				return firstStop;
 				
@@ -1963,7 +1958,7 @@ scene.entities.colorLib = {
 				
 				var lastStop = stopSetObj[Object.keys(stopSetObj)[Object.keys(stopSetObj).length - 1]];
 				
-				debug.master && console.log( 'lucidChart.stops.get.last(): ', lastStop );
+				debug.master && debug.colorLib && console.log( 'lucidChart.color.stops.get.last(): ', lastStop );
 				
 				return lastStop;
 				
@@ -1981,7 +1976,7 @@ scene.entities.colorLib = {
 			get: {
 				count: function( obj, colorCountAfterEachStop, i ) {
 					
-					debug.master && console.log ( 'sene.entities.colorLib.stops.colorsBetweenEach.get.count: Object Imported: ', obj );
+					debug.master && debug.colorLib && console.log ( 'entities.colorLib.stops.colorsBetweenEach.get.count: Object Imported: ', obj );
 	
 					obj[i].interval = {};
 					
@@ -1990,13 +1985,13 @@ scene.entities.colorLib = {
 					obj[i].interval.g = obj[i].delta.g / colorCountAfterEachStop;
 					obj[i].interval.b = obj[i].delta.b / colorCountAfterEachStop;
 
-					debug.master && console.log ( 'sene.entities.colorLib.stops.colorsBetweenEach.get.count: Object Transformed: ', obj );
+					debug.master && debug.colorLib && console.log ( 'entities.colorLib.stops.colorsBetweenEach.get.count: Object Transformed: ', obj );
 				}
 			},
 			calc: function( obj, colorCountAfterEachStop, i ) {					
 				let h = i-1;
 				
-				debug.master && console.log ( 'sene.entities.colorLib.stops.colorsBetweenEach.calc: Array imported: ', obj );
+				debug.master && debug.colorLib && console.log ( 'entities.colorLib.stops.colorsBetweenEach.calc: Array imported: ', obj );
 				
 				for ( c = 1 ; c < /* colorCountAfterEachStop */ chartSettings.color.palette.colorsPerOctave ; c++ ) {			
 
@@ -2015,7 +2010,7 @@ scene.entities.colorLib = {
 					
 				}
 				
-				debug.master && console.log ( 'sene.entities.colorLib.stops.colorsBetweenEach.calc: Array Transformed: ', obj );
+				debug.master && debug.colorLib && console.log ( 'entities.colorLib.stops.colorsBetweenEach.calc: Array Transformed: ', obj );
 			}
 		}
 	},
@@ -2046,18 +2041,18 @@ scene.entities.colorLib = {
 					stopsArray[i].b[0] >= 255 ? stopsArray[i].b[0] = 255 : false;
 					
 					if (i > 0) {
-						scene.entities.colorLib.stops.get.deltas( stopsArray, i );  // Color changes from one stop to the next.
-						scene.entities.colorLib.stops.colorsBetweenEach.get.count( stopsArray, obj.color.palette.colorCountAfterEachStop, i );
-						scene.entities.colorLib.stops.colorsBetweenEach.calc( stopsArray , obj.color.palette.colorCountAfterEachStop, i );
+						entities.colorLib.stops.get.deltas( stopsArray, i );  // Color changes from one stop to the next.
+						entities.colorLib.stops.colorsBetweenEach.get.count( stopsArray, obj.color.palette.colorCountAfterEachStop, i );
+						entities.colorLib.stops.colorsBetweenEach.calc( stopsArray , obj.color.palette.colorCountAfterEachStop, i );
 					}
 					
 					i++;
 				}
 			}
 			
-			var flattenedArray = scene.entities.colorLib.asArray.flatten( stopsArray, obj.color.palette.colorCountAfterEachStop );
+			var flattenedArray = entities.colorLib.asArray.flatten( stopsArray, obj.color.palette.colorCountAfterEachStop );
 			
-			debug.master && console.log ( 'scene.entitites.colorLib.asArray.populate(): ', flattenedArray );
+			debug.master && debug.colorLib && console.log ( 'entities.colorLib.asArray.populate(): ', flattenedArray );
 			
 			return flattenedArray;
 		},
@@ -2078,12 +2073,11 @@ scene.entities.colorLib = {
 					flatArray[counter].g = obj[a].g[b];
 					flatArray[counter].b = obj[a].b[b];
 					counter++
-				}
+				};
 				
-			}
+			};
 
-			debug.master && console.log ( 'scene.entitites.colorLib.asArray.flatten(): ', counter );
-			debug.master && console.log ( 'scene.entitites.colorLib.asArray.flatten(): ', flatArray );
+			debug.master && debug.colorLib && console.log ( 'entities.colorLib.asArray.flatten(): ', flatArray );
 			
 			return flatArray;
 		}
@@ -2098,9 +2092,9 @@ scene.entities.colorLib = {
 
 function dispatchLoggedEvent( e ) {
 
-	debug.master && console.log ( 'About to dispatch ' , e );
+	debug.master && debug.events && console.log ( 'About to dispatch ' , e );
 	dispatchEvent( e );
-	debug.master && console.log ( 'Just dispatched ' , e );
+	debug.master && debug.events && console.log ( 'Just dispatched ' , e );
 		
 }
 
@@ -2110,17 +2104,17 @@ function dispatchLoggedEvent( e ) {
 
 function makeLoadedGeometryLineDrawing() {
 	
-	var mesh = scene.entities.geometries.dynamic.loadedFromExternal.bufferGeoms.passedMesh;
+	var mesh = entities.geometries.dynamic.loadedFromExternal.bufferGeoms.passedMesh;
 	
 	function positionObject( mesh ) {
 		mesh.position.y = 15;
 	}
 	
-	scene.entities.geometries.dynamic.loadedFromExternal.mutated.meshAsLineDrawing = new THREE.Line ( geo2line( mesh.geometry ), scene.entities.materials.line.dashed.red, THREE.linePieces );
+	entities.geometries.dynamic.loadedFromExternal.mutated.meshAsLineDrawing = new THREE.Line ( geo2line( mesh.geometry ), entities.materials.line.dashed.red, THREE.linePieces );
 	
-	scene.add( scene.entities.geometries.dynamic.loadedFromExternal.mutated.meshAsLineDrawing );	
+	scene.add( entities.geometries.dynamic.loadedFromExternal.mutated.meshAsLineDrawing );	
 	
-	positionObject( scene.entities.geometries.dynamic.loadedFromExternal.mutated.meshAsLineDrawing );
+	positionObject( entities.geometries.dynamic.loadedFromExternal.mutated.meshAsLineDrawing );
 }
 
 /* PARKED FUNCTIONS */
@@ -2153,8 +2147,8 @@ function parseExponentialExpression ( expression ) {
 	parsedExpression = 'Math.pow(' + operand + ', ' + exponent + ')';
 	evaluatedExpression = eval( parsedExpression );
 	
-	debug.master && console.log( 'Parsed Exponential Expression = ', parsedExpression );
-	debug.master && console.log( 'Parsed Exponential Expression evaluates to :' , evaluatedExpression );
+	debug.master && debug.math && console.log( 'Parsed Exponential Expression = ', parsedExpression );
+	debug.master && debug.math && console.log( 'Parsed Exponential Expression evaluates to :' , evaluatedExpression );
 }
 
 */
