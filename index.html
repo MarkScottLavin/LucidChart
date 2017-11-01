@@ -1,0 +1,315 @@
+<html>
+<header>
+	<title>LucidChart Experiment</title>
+
+	<!-- BOOTSTRAP & JQUERY -->
+	
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<!-- Latest compiled JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<!-- THREE.JS AND RELATED LIBRARY MODULES -->
+	<script src="js/three.min.js"></script>
+	<script src="js/StereoEffect.js"></script>
+	<script src="js/DeviceOrientationControls.js"></script>
+	<script src="js/OrbitControls.js"></script>
+	
+	<!-- LOADERS -->
+	<script src="js/loaders/OBJLoader-to-buffergeometry.js"></script>
+	<script src="js/loaders/OBJLoader-to-geometry.js"></script>
+	
+	<link rel="stylesheet" href="css/stylesheet.css">
+	
+</header>
+
+<body>
+
+<div id="visualizationContainer">
+	<script src="app.js"></script>
+</div>
+
+<div class="container-fluid" id="desktopUI">
+<div class="row darkBg" id="equationTitle">
+	<div class="col-sm-12 text-center">
+		<h2><strong><em><div id="equationTextBox" name="equationTextBox"></div></em></strong></h2>
+	</div>
+</div>
+<div class="row" id="interface">
+	<form class="form-horizontal" id="interface_v0_5" action="#" method="post">
+<div class="col-sm-4">
+	<!-- DATA PANEL -->
+	<h3>Data</h3>
+	<hr>
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-sm-12">
+				<h4>Datatype</h4>
+			</div>
+		</div>
+		<div class="row">
+			<fieldset class="col-sm-3" id="dataTypeSelect">
+					<input type="radio" id="dataTypeRandomHeight" name="dataType" value="randomHeight">Random<br>
+					<input type="radio" id="dataTypeEquation" name="dataType" value="equation">Equation<br>
+			</fieldset>
+			<fieldset class="col-sm-9" id="dataEquationOptions">
+				<select id="equationSelect" name="equationSelect">
+					<option value="basicQuadratic">Basic Quadratic</option>
+					<option value="Qbert">Qbert</option>
+					<option value="Precipitous">Precipitous</option>
+					<option value="Rocketing">Rocketing</option>
+					<option value="Wave">Wave</option>
+					<option value="Steppe">Steppe</option>
+					<option value="Rockslide">Rockslide</option>
+					<option value="Waterfall">Waterfall</option>				
+					<option value="AsymptoticCrash1">Asymptotic Crash 1</option>
+					<option value="GatesAndWalls">Gates and Walls</option>
+					<option value="AsymptoticCrash2">Asymptotic Crash 2</option>				
+				</select>
+			</fieldset>
+			<fieldset class="col-sm-6" id="dataRandomOptions">
+				<table id="randomMinMaxHeightTable">
+					<tbody>
+						<tr>
+							<td class="col1">
+								<label class="yText" for="randomMaxHeight">Max y = </label>
+							</td>
+							<td class="col2">
+								<input type="number" class="smallNumberInput yText" id="randomMaxHeight" name="randomMaxHeight" min="0" max="50">
+							</td>
+						</tr>
+						<tr>
+							<td class="col1">
+								<label class="yText" for="randomMinHeight">Min y = </label>
+							</td>
+							<td class="col2">
+								<input type="number" class="smallNumberInput yText" id="randomMinHeight" name="randomMinHeight" min="-50" max="0">
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</fieldset>
+		</div>
+		<hr>
+		<div class="row">
+			<fieldset class="col-sm-12" id="dataRange">
+				<h4>Range</h4>
+				<table id="dataRangeTable">
+					<tbody>
+						<tr>
+							<th class="col1"></th>
+							<th class="col2">From</th>
+							<th class="col3">To</th>
+							<th class="col4">Abs Range</th>
+						</tr>
+						<tr>
+							<td class="col1">
+								<label class="xText" for="xRangeStart">x = </label>
+							</td>
+							<td class="col2">
+								<input type="number" class="smallNumberInput xText" id="xRangeStart" name="xRangeStart" min="-150" max="150">
+							</td>
+							<td class="col3">
+								<input type="number" class="smallNumberInput xText" id="xRangeEnd" name="xRangeEnd" min="-150" max="150">
+							</td>
+							<td class="col4">
+								<input type="number" class="smallNumberInput xText" id="xCount" name="xCount" readonly>
+							</td>
+						</tr>
+						<tr>
+							<td class="col1">
+								<label class="zText" for="zRangeStart">z =  </label>
+							</td>
+							<td class="col2">
+								<input type="number" class="smallNumberInput zText" id="zRangeStart" name="zRangeStart" min="-150" max="150">
+							</td>
+							<td class="col3">
+								<input type="number" class="smallNumberInput zText" id="zRangeEnd" name="zRangeEnd" min="-150" max="150">
+							</td>
+							<td class="col4">
+								<input type="number" class="smallNumberInput zText" id="zCount" name="zCount" readonly>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</fieldset>
+			</div>
+		</div>
+	</div>
+<div class="col-sm-4">	
+	<!-- COLOR PANEL -->
+	<h3>Appearance</h3>
+	<hr>
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-sm-12">
+				<h4>Color</h4>
+			</div>
+		</div>
+		<div class="row">
+			<fieldset class="col-sm-6" id="colorModeSelect">
+				<h5>Mode</h5>
+					<input type="radio" id="colorModeRandom" name="colorMode" value="randomColor">Random<br>	
+					<input type="radio" id="colorModeByHeight" name="colorMode" value="colorByHeight">Color By Height<br>
+					<input type="radio" id="colorModeMonochrome" name="colorMode" value="monochrome">Monochrome<br>			
+			</fieldset>
+			<fieldset class="col-sm-6" id="colorGradientSelect">
+				<h5>Gradient Type</h5>
+					<input type="radio" id="gradientTwoTone" name="gradientType" value="twoTone">Two Tone<br>
+					<input type="radio" id="gradientGrayScale" name="gradientType" value="grayScale">GrayScale<br>					
+					<input type="radio" id="gradientRainbow" name="gradientType" value="rainbow">Rainbow<br>
+			</fieldset>
+		</div>
+		<hr>
+		<fieldset class="row" id="colorPalette">
+			<div class="col-sm-12">
+				<table id="choosePaletteDepthTable">
+					<tbody>
+						<tr>
+							<td class="col1">
+								<label for "choosePaletteDepth" id="paletteDepthLabel">Palette Depth</label>
+							</td>
+							<td class="col2">
+								<input type="range" id="choosePaletteDepth" min="1" max="3" step="1" list="tickmarks">
+									<datalist id="tickmarks">
+									<option value="1" label="low">
+									<option value="2" label="med">
+									<option value="3" label="high">
+									</datalist>	
+								</input>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<hr>
+			</div>
+		</fieldset>
+		<fieldset class="row" id="colorPickers">
+			<fieldset class="col-sm-12" id="monoColorPicker">
+				<table id="monoColorPickerTable">
+					<tbody>
+						<tr>
+							<td class="col1">
+								<label for="monoColor">Chart Color = </label>
+							</td>
+							<td class="col2">
+								<input type="color" id="monoColor" name="monoColor" value="#ff0000"><br>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<hr>
+			</fieldset>
+			<fieldset class="col-sm-12" id="byHeightColorPickers">
+				<table id="byHeightColorPickersTable">
+					<tbody>
+						<tr>
+							<td class="col1">
+								<label class="yText" for="topColor">Color @ max y = </label>
+							</td>
+							<td class="col2">
+								<input type="color" id="topColor" name="topColor" value="#ff0000">
+							</td>
+						</tr>
+						<tr>
+							<td class="col1">
+								<label class="yText" for="bottomColor">Color @ min y = </label>
+							</td>
+							<td class="col2">
+								<input type="color" id="bottomColor" name="bottomColor" value="#990000">
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<hr>
+			</fieldset>
+		</fieldset>
+		<fieldset class="row" id="colorHeightThresh">
+			<div class="col-sm-12">
+				<input type="checkbox" id="hasMinMaxColorThreshold" name="hasMinMaxColorThreshold" value="true">Only apply color scheme between a min & max height?
+			</div>
+			<fieldset class="col-sm-12" id="threshSettings">
+				<table id="threshSettingsTable">
+					<tbody>
+						<tr>
+							<td class="col1"><label for="maxColorHeight" class="yText">Max y = </label></td>
+							<td class="col2"><input type="number" class="smallNumberInput yText" id="maxColorHeight" name="maxColorHeight"></td>
+							<td class="col3"><label for="colorAboveThreshold" class="yText">Color Above = </label></td>
+							<td class="col4"><input type="color" id="colorAboveThreshold" name="colorAboveThreshold" value="#ff00ff"></td>
+						</tr>
+						<tr>
+							<td class="col1"><label for="minColorHeight" class="yText">Min y = </label></td>
+							<td class="col2"><input type="number" class="smallNumberInput yText" id="minColorHeight" name="minColorHeight"></td>
+							<td class="col3"><label for="colorBelowThreshold" class="yText">Color Below = </label></td>
+							<td class="col4"><input type="color" id="colorBelowThreshold" name="colorBelowThreshold" value="#ff0000"></td>
+						</tr>
+					</tbody>
+				</table>
+				<hr>
+			</fieldset>
+			<hr>
+		</fieldset>
+		
+		<div class="row">
+			<div class="col-sm-12">
+				<h4>Chart</h4>
+			</div>
+		</div>		
+		<fieldset class="row" id="appearanceOptions">
+			<div class="col-sm-12">
+				<table id="barThicknessTable">
+					<tbody>
+						<tr>
+							<td class="col1">
+								<label for "barThickness" id="barThicknessLabel">Bar Thickness</label>
+							</td>
+							<td class="col2">
+								<input type="range" id="barThickness" min="1" max="4" step="1" list="tickmarks">
+									<datalist id="tickmarks">
+									<option value="1" label="25%">
+									<option value="2" label="50%">
+									<option value="3" label="75%">
+									<option value="4" label="100%">
+									</datalist>	
+								</input>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<hr>
+			</div>
+		</fieldset>		
+		
+		
+		
+
+		</div>
+	</div>
+	<div class="col-sm-4">
+		<!-- VIEW PANEL -->
+		<h3>View</h3>
+		<hr>
+			<fieldset id="cameraPositions">
+			<h4>Camera Position</h4>
+				<label for="xCamPos" class="xText">x</label>
+				<input id="xCamPos" type="number" class="xText"><br>
+				<label for="yCamPos" class="yText">y</label>
+				<input id="yCamPos" type="number" class="yText"><br>
+				<label for="zCamPos" class="zText">z</label>
+				<input id="zCamPos" type="number" class="zText"><br>
+			</fieldset>
+			<hr>
+			<div class="btn btn-center">
+			<input type="button" name="updateBtn" class="btn btn-primary" id="updateBtn" value="Update">
+			</div>
+	</div>
+	</form>
+</div>
+</div>
+</div>
+
+</body>
