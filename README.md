@@ -318,3 +318,10 @@ Version 0.5.2
 	
 Version 0.5.3
 - Added Bar Thickness feature
+
+Version 0.5.4
+- Refactoring: 
+	- Uncoupled 'entities' & 'utils' objects from 'scene' (THREE.scene object) to avoid potential confusion with native THREE.js functionality.
+	- Renamed 'desktopUI' to 'browserUI' to prevent potential conflicts with native brower functionality and potential confusion between desktop & mobile functionailty (both operate with the same UI/controls).
+	- Renamed 'UI.VR' to 'UI.mixedReality' in consideration of full range of potential uses.
+- Debugging - set up local debug flags to allow for debugging of code sections independently (and caught a couple of minor instrumentation issues in the process)
