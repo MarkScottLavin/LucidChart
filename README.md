@@ -325,3 +325,6 @@ Version 0.5.4
 	- Renamed 'desktopUI' to 'browserUI' to prevent potential conflicts with native brower functionality and potential confusion between desktop & mobile functionailty (both operate with the same UI/controls).
 	- Renamed 'UI.VR' to 'UI.mixedReality' in consideration of full range of potential uses.
 - Debugging - set up local debug flags to allow for debugging of code sections independently (and caught a couple of minor instrumentation issues in the process)
+
+Version 0.5.5
+- Ran through code analyzer (JSHint). Fixed a number of syntax warnings and removed unused variables.

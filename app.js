@@ -1,6 +1,6 @@
 /* APP
  * Name: LucidChart
- * version 0.5.4
+ * version 0.5.5
  * Author: Mark Scott Lavin 
  * License: MIT
  * For Changelog see README.txt
@@ -13,7 +13,7 @@
 // Top-level Initialization Vars
 var container = document.getElementById('visualizationContainer');
 
-var scene = new THREE.Scene;
+var scene = new THREE.Scene();
 var entities = {}; // Holds .objects, .lights, .cameras
 scene.events = {
 	synthetic: {}
@@ -47,7 +47,7 @@ var utils = {
 		},
 		remove: function( name ) {
 			
-			var entity = scene.getObjectByName( name )	
+			var entity = scene.getObjectByName( name );
 			scene.remove( entity );
 		}
 	},
@@ -55,7 +55,7 @@ var utils = {
 		fromExternal: {
 			load: function( sourceFilePath , sourceFormat ) {
 				
-				utils.geometries.fromExternal[sourceFormat] ( sourceFilePath ) || function() { console.error ( 'Invalid file source format provided. Must be OBJ or JSON' ) };
+				utils.geometries.fromExternal[sourceFormat]( sourceFilePath ) || function() { console.error ( 'Invalid file source format provided. Must be OBJ or JSON' ); };
 				debug.master && debug.externalLoading && console.log ('About to Load all the Geometry' );
 
 			},
@@ -126,7 +126,7 @@ var renderer;
 
 // Debug obj - if debug.master = true, we'll flags what areas o the code to debug.
 var debug = { 
-	master: true, 
+	master: false, 
 /*	events: true, */
 	UI: { /*
 		browser: true, 
@@ -145,7 +145,7 @@ var debug = {
 
 // lucidChart Entity Initialization
 var lucidNode = {
-}
+};
 var chartSettings = {
 	data: {},
 	math: {},
@@ -245,7 +245,7 @@ var UI = function( device ) {
 						},
 						confirmUnbind: function( e ) {
 							if ( UI.sharedStates.thresholdColorsBound ) {
-								if (confirm('Changing the Below Min or Above Max colors manually will unbind them from the Top and Bottom Color settings. Proceed?') == true) {
+								if (confirm('Changing the Below Min or Above Max colors manually will unbind them from the Top and Bottom Color settings. Proceed?') === true) {
 									UI.browser.inputs.color.thresh.topAndBottomBound.unListen();
 									UI.sharedStates.thresholdColorsBound = false;
 									} 
@@ -381,8 +381,8 @@ var UI = function( device ) {
 				
 				data: {
 					dynamicCounts: {
-						x: function() { self.inputs.data.count.x.attr ( 'value' , chartSettings.data.count.x()) },
-						z: function() { self.inputs.data.count.z.attr ( 'value' , chartSettings.data.count.z()) }
+						x: function() { self.inputs.data.count.x.attr ( 'value' , chartSettings.data.count.x()); },
+						z: function() { self.inputs.data.count.z.attr ( 'value' , chartSettings.data.count.z()); }
 						}
 					},
 				
@@ -409,7 +409,7 @@ var UI = function( device ) {
 							self.fieldsets.data.randomOptions.show();
 							self.fieldsets.data.equationOptions.hide();
 							self.fieldsets.color.heightThresh.hide();		
-						};
+						}
 						
 						if (dataTypeEquation) {
 							self.fieldsets.data.randomOptions.hide();
@@ -420,8 +420,8 @@ var UI = function( device ) {
 								}
 							else if (colorModeByHeight) {
 								self.fieldsets.color.heightThresh.show();
-							};
-						};
+							}
+						}
 						
 						if (colorModeRandom) {
 							self.fieldsets.color.gradientSelect.show();
@@ -434,8 +434,8 @@ var UI = function( device ) {
 								}
 							else if (gradientTypeRainbow) {
 								self.fieldsets.color.byHeightColorPickers.hide();						
-								};
-						};
+								}
+						}
 						
 						if (colorModeByHeight) {
 							self.fieldsets.color.gradientSelect.show();
@@ -448,8 +448,8 @@ var UI = function( device ) {
 								}
 							else if (gradientTypeRainbow) {
 								self.fieldsets.color.byHeightColorPickers.hide();						
-								};
-						};
+								}
+						}
 						
 						if (colorModeMono) {
 							self.fieldsets.color.monoColorPicker.show();
@@ -457,7 +457,7 @@ var UI = function( device ) {
 							self.fieldsets.color.gradientSelect.hide();
 							self.fieldsets.color.palette.hide();
 							self.fieldsets.color.heightThresh.hide();							
-						};
+						}
 						
 						var hasThresholdsVisible = self.inputs.color.thresh.isOn.input.is(':visible');						
 						
@@ -495,7 +495,7 @@ var UI = function( device ) {
 				chartSettings.math.demoEquation = document.getElementById('equationSelect').value;
 				// Pass the top & bottom colors here too...
 				self.update.inputs.selectAndText();
-				self.update.inputs.radioAndCheck()
+				self.update.inputs.radioAndCheck();
 					} 
 				);
 
@@ -527,7 +527,7 @@ var UI = function( device ) {
 						else { 
 							chartSettings.math.demoEquation = "Wave";
 							self.inputs.data.equation.select.val( chartSettings.math.demoEquation );
-						};
+						}
 						
 						self.fieldsets.data.equationOptions.fadeIn( 1000 );
 						self.fieldsets.data.equationOptions.css( {"background-color": "#fff"} );
@@ -547,14 +547,14 @@ var UI = function( device ) {
 							if(self.inputs.color.thresh.isOn.input.is(':checked')){
 								self.fieldsets.color.threshSettings.fadeIn( 1000 );										
 								self.fieldsets.color.threshSettings.css({"background-color":"#fff"});
-							};
+							}
 							
 						}
 						else {										
 							self.fieldsets.color.heightThresh.css({"background-color":"#ddd"});
 							self.fieldsets.color.heightThresh.fadeOut( 1000 );							
 						}
-					};
+					}
 					
 				self.inputs.data.equation.text.html( 'y = ' + lucidChart.math.func.preset.dict( chartSettings.math ).display() || 'null' );
 				
@@ -586,7 +586,7 @@ var UI = function( device ) {
 					else if ( self.inputs.color.gradientSelect.rainbow.is(':checked')) {
 						self.fieldsets.color.byHeightColorPickers.css( {"background-color": "#ddd"} );						
 						self.fieldsets.color.byHeightColorPickers.fadeOut( 1000 ); 
-						};
+						}
 				}
 				
 				else if (this.value === 'colorByHeight') {
@@ -610,8 +610,8 @@ var UI = function( device ) {
 						if(self.inputs.color.thresh.isOn.input.is(':checked')){
 							self.fieldsets.color.threshSettings.fadeIn( 1000 );										
 							self.fieldsets.color.threshSettings.css({"background-color":"#fff"});
-							};
-						};
+							}
+						}
 					
 					if ( self.inputs.color.gradientSelect.twoTone.is(':checked')) {
 						self.fieldsets.color.byHeightColorPickers.fadeIn( 1000 );
@@ -620,7 +620,7 @@ var UI = function( device ) {
 					else if ( self.inputs.color.gradientSelect.rainbow.is(':checked')) {
 						self.fieldsets.color.byHeightColorPickers.css( {"background-color": "#ddd"} );						
 						self.fieldsets.color.byHeightColorPickers.fadeOut( 1000 ); 
-						};
+						}
 				}
 				
 				else if (this.value === 'monochrome') {
@@ -660,8 +660,8 @@ var UI = function( device ) {
 					if(self.inputs.color.thresh.isOn.input.is(':checked')){
 						self.fieldsets.color.threshSettings.fadeIn( 1000 );										
 						self.fieldsets.color.threshSettings.css({"background-color":"#fff"});
-					};					
-				};
+					}					
+				}
 				
 				
 				if (this.value === 'twoTone'){
@@ -692,7 +692,7 @@ var UI = function( device ) {
 					// hide the top/bottom colorpickers
 					self.fieldsets.color.byHeightColorPickers.css( {"background-color": "#ddd"} );						
 					self.fieldsets.color.byHeightColorPickers.fadeOut( 1000 ); 
-				};
+				}
 			
 				// check if the threshold above/below colors are are still bound.					
 				if ( UI.browser.inputs.color.thresh.topAndBottomBound.isTrue ) {						
@@ -700,7 +700,7 @@ var UI = function( device ) {
 					chartSettings.color.thresh.setColorsAboveAndBelow();
 					// and update the UI.
 					self.update.inputs.colorPicker();
-				};
+				}
 			}
 			);
 			
@@ -723,7 +723,7 @@ var UI = function( device ) {
 				else {
 					self.fieldsets.color.threshSettings.css({"background-color":"#ddd"});
 					self.fieldsets.color.threshSettings.fadeOut( 1000 );										
-				};
+				}
 			});
 			
 			//GradientSelect
@@ -739,11 +739,11 @@ var UI = function( device ) {
 			UI.browser.inputs.color.thresh.topAndBottomBound.bind();
 			UI.browser.inputs.color.thresh.topAndBottomBound.listen();
 			
-		}
+		};
 	};
 		
 
-	UI.mixedReality = function(){}
+	UI.mixedReality = function(){};
 	
 	// Call the UI for the appropriate device
 	UI[device]();
@@ -783,7 +783,7 @@ function init() {
 	// GEOMETRIES
 	initGeometries();
 	
-	// Create the Stereoscopic viewing object
+	// Create the Stereoscopic viewing object (Not applied yet)
 	var effect = new THREE.StereoEffect(renderer);
 		
 	debug.master && debug.renderer && console.log ('About to call the render function' );
@@ -871,7 +871,7 @@ function cameras() {
 					debug.master && debug.cameras && console.log ('Camera Position Updated: ' , camera.position );
 			}
 		}
-	}
+	};
 }
 
 function initRenderer() {
@@ -1047,7 +1047,7 @@ function axes( extents , rulers ) {
 				entities.axes.rulers( 'x' , extents, 1 );
 				entities.axes.rulers( 'y' , extents, 1 );
 				entities.axes.rulers( 'z' , extents, 1 );
-			};			
+			}			
 		}
 	};
 	
@@ -1096,9 +1096,9 @@ function materials() {
 		ground: new THREE.MeshBasicMaterial( {color: 0xdddddd, side: THREE.DoubleSide, transparent: true, opacity: 0.5} ),
 		line: {
 				dashed:{
-						red: new THREE.LineDashedMaterial ({ color: 0xff0000, dashSize: .1, gapSize: .1,	linewidth: 3 }),
-						blue: new THREE.LineDashedMaterial ({ color: 0x0000ff, dashSize: .1, gapSize: .1, linewidth: 3 }), 
-						green: new THREE.LineDashedMaterial ({ color: 0x00ff00, dashSize: .1, gapSize: .1, linewidth: 3 }),
+						red: new THREE.LineDashedMaterial ({ color: 0xff0000, dashSize: 0.1, gapSize: 0.1,	linewidth: 3 }),
+						blue: new THREE.LineDashedMaterial ({ color: 0x0000ff, dashSize: 0.1, gapSize: 0.1, linewidth: 3 }), 
+						green: new THREE.LineDashedMaterial ({ color: 0x00ff00, dashSize: 0.1, gapSize: 0.1, linewidth: 3 }),
 				}
 		},
 		solid: {
@@ -1177,7 +1177,7 @@ function initGeometries() {
 				mutated: {}
 			}
 		}
-	}
+	};
 	
 	//	Render the Ground
 	entities.geometries.constant.ground();
@@ -1225,9 +1225,9 @@ var lucidChart = function( chartSettings, name ) { /* takes chartsettings object
 			var renderCap = math.renderHeightCap || 9999;
 			
 			if ( math.renderCapAsApproachesInfinity ) {
-				y > renderCap  ?  y = renderCap : false;
-				y < -renderCap ?  y = -renderCap : false;
-				};
+				y >= renderCap  ?  y = renderCap : false;
+				y <= -renderCap ?  y = -renderCap : false;
+				}
 			
 			return y;
 			},
@@ -1248,7 +1248,7 @@ var lucidChart = function( chartSettings, name ) { /* takes chartsettings object
 				chartSettings.math.generatedHeight = {
 					min: null,
 					max: null
-				}
+				};
 			}
 		}
 	};
@@ -1310,24 +1310,9 @@ var lucidChart = function( chartSettings, name ) { /* takes chartsettings object
 		heightZones: {
 			set: function( chartSettings ) {
 				
-				var checkIntZeroVal = function( val ) {
-					if ( val === 0 ) {
-						return parseInt(val);
-					}
-				};
-				
 				/* logic from currentStates (refactor later to avoid repeat) */
 				var dataTypeRandom = UI.browser.inputs.data.typeSelect.random.is(':checked');
 				var dataTypeEquation = UI.browser.inputs.data.typeSelect.equation.is(':checked');
-				
-				// Get the initial colormode
-				var colorModeRandom = UI.browser.inputs.color.modeSelect.random.is(':checked');
-				var colorModeByHeight = UI.browser.inputs.color.modeSelect.byHeight.is(':checked');
-				var colorModeMono = UI.browser.inputs.color.modeSelect.mono.is(':checked');
-				
-				// Get the initial gradientType
-				var gradientTypeTwoTone = UI.browser.inputs.color.gradientSelect.twoTone.is(':checked');
-				var gradientTypeRainbow = UI.browser.inputs.color.gradientSelect.rainbow.is(':checked');
 				
 				// Get the initial hasThresholds state
 				var hasThresholds = UI.browser.inputs.color.thresh.isOn.input.is(':checked');				
@@ -1337,30 +1322,18 @@ var lucidChart = function( chartSettings, name ) { /* takes chartsettings object
 				if (dataTypeRandom) {
 					maxThresh = chartSettings.math.maxUserSetHeight;
 					minThresh = chartSettings.math.minUserSetHeight;
-				};
+				}
 				
 				if (dataTypeEquation) {
-					if ( hasThresholds 	&& ( 
-							chartSettings.color.thresh.max || chartSettings.color.thresh.max === 0 ) 
-										&& ( 
-							chartSettings.color.thresh.min || chartSettings.color.thresh.min === 0 )
-							){
+					if ( hasThresholds 	&& ( chartSettings.color.thresh.max || chartSettings.color.thresh.max === 0 ) && ( chartSettings.color.thresh.min || chartSettings.color.thresh.min === 0 )){
 						maxThresh = chartSettings.color.thresh.max;
 						minThresh = chartSettings.color.thresh.min;
 					}
-					else if ( 
-							( chartSettings.math.generatedHeight.max || chartSettings.math.generatedHeight.max === 0 ) 
-										&& 
-							( chartSettings.math.generatedHeight.min || chartSettings.math.generatedHeight.min === 0 )
-							){
+					else if ( ( chartSettings.math.generatedHeight.max || chartSettings.math.generatedHeight.max === 0 ) && ( chartSettings.math.generatedHeight.min || chartSettings.math.generatedHeight.min === 0 )){
 						maxThresh = chartSettings.math.generatedHeight.max;
 						minThresh = chartSettings.math.generatedHeight.min;
 					}
-					else if (
-							( chartSettings.math.maxThreshDefault || chartSettings.math.maxThreshDefault === 0 )
-										&& 
-							( chartSettings.math.minThreshDefault || chartSettings.math.minThreshDefault === 0 )
-							){
+					else if (( chartSettings.math.maxThreshDefault || chartSettings.math.maxThreshDefault === 0 ) && ( chartSettings.math.minThreshDefault || chartSettings.math.minThreshDefault === 0 )){
 						maxThresh = chartSettings.math.maxThreshDefault;
 						minThresh = chartSettings.math.minThreshDefault;
 					}
@@ -1417,7 +1390,7 @@ var lucidChart = function( chartSettings, name ) { /* takes chartsettings object
 							UI.browser.inputs.color.thresh.max.val( chartSettings.color.thresh.max );
 					}
 					
-					else { lucidChart.color.minMaxThresh.reset(); };
+					else { lucidChart.color.minMaxThresh.reset(); }
 				},
 				integration: function( chartSettings ){
 				
@@ -1440,7 +1413,7 @@ var lucidChart = function( chartSettings, name ) { /* takes chartsettings object
 					else {
 						lucidChart.color.minMaxThresh.setVia.integration.max = 0;
 						lucidChart.color.minMaxThresh.setVia.integration.min = 0;
-					};
+					}
 				
 				},
 			}, 
@@ -1473,7 +1446,7 @@ var lucidChart = function( chartSettings, name ) { /* takes chartsettings object
 					colorAboveThreshold = chartSettings.color.twoToneStops.top;
 					colorBelowThreshold = chartSettings.color.twoToneStops.bottom;
 						
-					};
+					}
 			
 				yHeight >= lucidChart.color.minMaxThresh.setVia.integration.max ? mtl = entities.materials.solid.phong.load ( colorAboveThreshold.r , colorAboveThreshold.g , colorAboveThreshold.b ) : false;
 				yHeight <= lucidChart.color.minMaxThresh.setVia.integration.max ? mtl = entities.materials.solid.phong.load ( colorBelowThreshold.r , colorBelowThreshold.g , colorBelowThreshold.b ) : false;
@@ -1482,7 +1455,7 @@ var lucidChart = function( chartSettings, name ) { /* takes chartsettings object
 				return mtl;
 			}			
 		}
-	}
+	};
 	
 	entities.geometries.dynamic.chart = [];   // Set up the chart object 
 	
@@ -1592,12 +1565,12 @@ lucidChart.init = function() {
 			getCount: function(){
 				
 				if ( chartSettings.color.countRawVal === 1 ){
-					chartSettings.color.count = 11 }
+					chartSettings.color.count = 11; }
 				else if ( chartSettings.color.countRawVal === 2 ){
-					chartSettings.color.count = 44 }
+					chartSettings.color.count = 44; }
 				else if ( chartSettings.color.countRawVal === 3 ){
-					chartSettings.color.count = 121 }
-				else {chartSettings.color.count = 11 };
+					chartSettings.color.count = 121; }
+				else {chartSettings.color.count = 11; }
 			},
 			monoColor: { 
 				r: 255,
@@ -1660,7 +1633,7 @@ lucidChart.init = function() {
 	UI.browser.update.inputs.colorPicker();
 	UI.browser.update.inputs.currentStates();
 	
-}
+};
 
 // Values collected and passed on user clicking the Update button.
 lucidChart.update = function() {
@@ -1721,7 +1694,7 @@ lucidChart.update = function() {
 	UI.browser.update.inputs.radioAndCheck();
 	UI.browser.update.inputs.selectAndText();
 	UI.browser.update.inputs.colorPicker();
-}
+};
 
 lucidChart.math = {
 	func: {
@@ -1746,35 +1719,35 @@ lucidChart.math = {
 					},
 					"Rocketing" 		: {						
 						computed: 	function( x, z ) { return (Math.pow( x - z , (0.1 * ( x - z)))); },
-						display: 	function() { return '( x - z )<sup>( 0.1 * ( x - z ))</sup>'}
+						display: 	function() { return '( x - z )<sup>( 0.1 * ( x - z ))</sup>'; }
 					},
 					"Wave" 				: {
 						computed: 	function( x, z ) { return (Math.pow( x + z , (0.05 * ( x - z)))); },
-						display: 	function() { return '( x + z )<sup>(0.05 * ( x - z ))</sup>' }
+						display: 	function() { return '( x + z )<sup>(0.05 * ( x - z ))</sup>'; }
 					},
 					"Steppe" 			: {
 						computed:	function( x, z ) { return (Math.pow( x , (1/x) ) + Math.pow( z , (1/z) )); },
-						display:	function(){ return 'x<sup>( 1 / x )</sup> + z<sup>( 1 / z )</sup>'}
+						display:	function(){ return 'x<sup>( 1 / x )</sup> + z<sup>( 1 / z )</sup>'; }
 					},
 					"Rockslide" 		: {
 						computed: 	function( x, z ) { return (Math.pow( x , z/x ) + Math.pow( z , x/z )); },
-						display:	function() { return 'x<sup>( z / x )</sup> + z<sup>( x / z )</sup>'  }
+						display:	function() { return 'x<sup>( z / x )</sup> + z<sup>( x / z )</sup>'; }
 					},
 					"Waterfall" 		: {
 						computed: 	function( x, z ) { return (Math.pow( x , z/x ) + Math.pow( z , 0.3 )); },
-						display:	function() { return 'x<sup>( z / x)</sup> + z<sup>0.3</sup>' }
+						display:	function() { return 'x<sup>( z / x)</sup> + z<sup>0.3</sup>'; }
 					},
 					"AsymptoticCrash1" 	: {
 						computed: 	function( x, z ) { return ( x / z ); },
-						display:	function() { return 'x / z'}
+						display:	function() { return 'x / z'; }
 					},
 					"GatesAndWalls" 	: {
 						computed: 	function( x, z ) { return (Math.pow( x , ( z / 10 )) + Math.pow( z , ( x / 10 ))); },
-						display:	function() { return 'x<sup>( z / 10 )</sup> + z<sup>( x / 10 )</sup>' }
+						display:	function() { return 'x<sup>( z / 10 )</sup> + z<sup>( x / 10 )</sup>'; }
 					},
 					"AsymptoticCrash2" 	: {
 						computed: 	function( x, z ) { return ( (x + ( z / 2 )) / ( z + ( x / 2 )) ); },
-						display:	function() { return '( x + ( z / 2 )) / ( z + ( x / 2 ))'}
+						display:	function() { return '( x + ( z / 2 )) / ( z + ( x / 2 ))'; }
 					},
 					"randomHeight"	  	: {
 						computed:	function(){ var min = math.minUserSetHeight || 0; // Default 0
@@ -1870,11 +1843,9 @@ entities.colorLib = {
 		var colorStops = chartSettings.color[chartSettings.color.gradientType + 'Stops'];
 		var stopsCount = entities.colorLib.stops.get.count( colorStops );   // # color stops.	If stops = "red, orange, yellow, green", then 4.
 		var octaveCount = stopsCount -1;										  // # color stops, minus the last. If 4 stops, then 3.
-		var colorsPerOctave = Math.floor( colorCount / octaveCount )			  // # colors in each octave. If 14 colors and 3 octaves, then 4 (14/3 = 4.67) -> Math.floor(4.67) = 4
+		var colorsPerOctave = Math.floor( colorCount / octaveCount );			  // # colors in each octave. If 14 colors and 3 octaves, then 4 (14/3 = 4.67) -> Math.floor(4.67) = 4
 		var modulo = colorCount % octaveCount;									  // # left over after all octaves have been subtracted. If 14 colors and 3 octaves then 2 ( 14 = 12-2 -> 12/3...)
-		var colorCountTruncated = colorCount - modulo;							  // # colorCount - modulo. If 14 colors total - 2, then 12.
 		var colorCountAfterEachStop;											  // 
-		var colors = {};
 		
 		chartSettings.color.palette.activeColorStops = colorStops;
 		
@@ -1922,7 +1893,7 @@ entities.colorLib = {
 				var grayScale = {
 					black: 		{	r: 0,		g: 0,		b: 0 	},
 					white:		{	r: 255,		g: 255,		b: 255	}
-				}
+				};
 				
 				return grayScale;
 			},
