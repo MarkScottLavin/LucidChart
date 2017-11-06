@@ -328,3 +328,7 @@ Version 0.5.4
 
 Version 0.5.5
 - Ran through code analyzer (JSHint). Fixed a number of syntax warnings and removed unused variables.
+
+Version 0.5.6
+- Remove unused code (functions retrievable in Version 0.5.5 - run diff)
+- Additional code cleanup & simplification. Uncoupled colorLib object from entities object.
