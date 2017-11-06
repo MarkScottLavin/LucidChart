@@ -1,6 +1,6 @@
 /* APP
  * Name: LucidChart
- * version 0.5.5
+ * version 0.5.6
  * Author: Mark Scott Lavin 
  * License: MIT
  * For Changelog see README.txt
@@ -8,33 +8,12 @@
 
 ( function () {
 
-/****** DECLARE GLOBAL OBJECT AND VARIABLES ******/
+/****** DECLARE GLOBAL OBJECTS AND VARIABLES ******/
 
 // Top-level Initialization Vars
 var container = document.getElementById('visualizationContainer');
 
 var scene = new THREE.Scene();
-var entities = {}; // Holds .objects, .lights, .cameras
-scene.events = {
-	synthetic: {}
-	};
-scene.hardFramework = function() {
-		
-	// CAMERAS;
-	cameras();
-	// RENDERER
-	initRenderer();
-	
-};
-scene.softFramework = function() {
-	
-	// LIGHTS
-	lights();
-	// AXES
-	axes( 300 , true );	
-	// MATERIALS
-	materials();
-};
 
 var utils = {
 	entity: { 
@@ -46,95 +25,34 @@ var utils = {
 			return parentObj;
 		},
 		remove: function( name ) {
-			
-			var entity = scene.getObjectByName( name );
-			scene.remove( entity );
+			scene.remove( scene.getObjectByName( name ) );
+			debug.master && debug.entities && console.log( 'utils.entity.remove(): ', name , ' removed from scene' );
 		}
-	},
-	geometries: {
-		fromExternal: {
-			load: function( sourceFilePath , sourceFormat ) {
-				
-				utils.geometries.fromExternal[sourceFormat]( sourceFilePath ) || function() { console.error ( 'Invalid file source format provided. Must be OBJ or JSON' ); };
-				debug.master && debug.externalLoading && console.log ('About to Load all the Geometry' );
-
-			},
-			OBJ: function( sourceFilePath ) {  // Example: 'assets/monster.obj'
-
-				var geometry;
-				var mesh;
-
-				loader = new THREE.OBJLoader();
-						
-				debug.master && debug.externalLoading && console.log ('About to call loader.load' );		
-						
-				loader.load(
-					sourceFilePath , function ( object ) { 
-					
-						debug.master && debug.externalLoading && console.log ('Starting to run loader.load CALLBACK' );
-						
-						geometry = new THREE.Geometry().fromBufferGeometry( object.children["0"].geometry );
-						geometry.computeLineDistances();
-									
-						mesh = new THREE.Mesh ( geometry );			
-						
-						debug.master && debug.externalLoading && console.log ( mesh );
-						
-						scene.events.synthetic.objectFinishedLoading = new CustomEvent('objectFinishedLoading' , { 
-							detail : { 
-								passedMesh : mesh 
-									}
-								}
-								);
-						
-						debug.master && debug.externalLoading && console.log ( 'About to dispatch the Finished Loading Event' );
-						
-						dispatchEvent( scene.events.synthetic.objectFinishedLoading);
-						
-						debug.master && debug.externalLoading && console.log ( 'Just Dispatched the Finished Loading Event' );
-						debug.master && debug.externalLoading && console.log ( scene.events.synthetic.objectFinishedLoading );
-						
-						debug.master && debug.externalLoading && console.log ('Done running loader.load CALLBACK' );		
-					
-						}	);
-				
-				debug.master && debug.externalLoading && console.log ('Done calling loader.load' );
-			},
-			JSON: function( sourceFilePath ) {  // Example: 'assets/monster.JSON'
-
-				var loader = new THREE.JSONLoader();
-						
-				loader.load(
-					sourceFilePath , function ( object ) { return( object ); }	);
-			}
-		},
-		mutate: function() {
-			
-			entities.geometries.dynamic.sphere = new THREE.SphereGeometry( 3, 24, 24 );
-			entities.geometries.dynamic.loadedFromExternal.mutated.lineSphere = new THREE.Line( geo2line(entities.geometries.dynamic.sphere), entities.materials.line.dashed.blue, THREE.linePieces );
-			//scene.add( entities.geometries.dynamic.loadedFromExternal.mutated.lineSphere );
-			
-			debug.master && debug.externalLoading && console.log ('First Geometry Loaded: The Line Sphere' );
-			debug.master && debug.externalLoading && console.log ( entities.geometries.dynamic.loadedFromExternal.mutated.lineSphere );
-
-		}
-	}		
+	}	
 };
 
 
 var renderer;
 
+// lucidChart Entity Initialization
+var chartSettings = {
+	data: {},
+	math: {},
+	color: {}
+};
+
 // Debug obj - if debug.master = true, we'll flags what areas o the code to debug.
 var debug = { 
 	master: false, 
 /*	events: true, */
-	UI: { /*
-		browser: true, 
-		mixedReality: true  */ },
+	UI: { 
+/*		browser: true, */
+/*		mixedReality: true  */ },
+/*	entities: true,  */
 /*	externalLoading: true,
 	renderer: true,
 	lucidChart: true, */
-	colorLib: true, 
+/*	colorLib: true,  */
 /*	scene: true, 
 	cameras: true, 
 	lights: true, 
@@ -143,29 +61,20 @@ var debug = {
 	math: true */
 };
 
-// lucidChart Entity Initialization
-var lucidNode = {
-};
-var chartSettings = {
-	data: {},
-	math: {},
-	color: {}
-};
-
 // UI Initialization
-var UI = function( device ) {
+var UI = function( device /* In the browser, or in mixedReality? */ ) {  
 	
 	UI.sharedStates = {
 			thresholdColorsBound: true,
 		};
 	UI.log = function() {
-				console.log( 'UI(): ', UI );
+				console.log( 'UI.', device, '(): ', UI[device] );
 		};
 	UI.browser = function() {
 		
 		var self = UI.browser;
 			
-			// DATA STATES
+		// DATA STATES
 		
 		self.inputs = {
 			data: {
@@ -478,9 +387,7 @@ var UI = function( device ) {
 			
 			self.inputs.updateBtn.onclick = function() {
 				
-				var clickedString = 'Update button Clicked'; 
-				
-				debug.master && debug.UI.browser && console.log ( clickedString );
+				debug.master && debug.UI.browser && console.log ( 'Update button Clicked' );
 				
 				lucidChart.update();
 				var camera = entities.cameras.perspCamera;
@@ -747,15 +654,8 @@ var UI = function( device ) {
 	
 	// Call the UI for the appropriate device
 	UI[device]();
-	debug.master && debug[device] && UI.log();
 	
 };
-
-// Scene Utility Vars
-var loader;
-
-// Callback Vars
-var loadedMesh = { stub: 'Nothing' };
 
 /****** RUN CODE ******/
 document.addEventListener( "DOMContentLoaded", init );
@@ -763,25 +663,31 @@ document.addEventListener( "DOMContentLoaded", init );
 /****** FUNCTION DECLARATIONS ******/
 
 // Initialize the scene: Invoke initialization.
-
 function init() {
-
-	//parseExponentialExpression( '12^10' ); // Just testing the math exponential parser
 	
-	// Scene Framework
-	scene.hardFramework();
-	scene.softFramework();
+	/* Initialize the scene framework */
+	// Cameras
+	cameras();
+	// Renderer
+	initRenderer();
+	// Lights
+	lights();
+	// Axes
+	axes( 300 , true );	
+	// Materials
+	materials();
 
+	/* Initialize the UI */
 	UI( 'browser' );
 	
-	// Initialize the chart settings
+	/* Initialize the settings of the lucidChart object */
 	lucidChart.init();
 	
-	// EVENTS
+	/* Initialize the event listeners */
 	initEventListeners();
 	
 	// GEOMETRIES
-	initGeometries();
+	entities();
 	
 	// Create the Stereoscopic viewing object (Not applied yet)
 	var effect = new THREE.StereoEffect(renderer);
@@ -811,30 +717,11 @@ function render() {
 
 function initEventListeners() {
 	
-	// Event Listeners & Traffic Control
-	
-	initDOMEvents();
-	// Initialize Event listeners for load-complete asynchronous events
-	initLoadEvents();
 	// Initialize browserUI Events
 	UI.browser.events();	
 	// Listen for Device Orientation events.
 	initControlEvents();
-}
-
-function initDOMEvents(){
-
-}
-
-function initLoadEvents() {
-	addEventListener('objectFinishedLoading', function (e) { 
-		debug.master && debug.externalLoading && console.log ( 'Caught the Custom Event: ' , e.detail.passedMesh ); 
-		entities.geometries.dynamic.loadedFromExternal.bufferGeoms.passedMesh = e.detail.passedMesh;
-		debug.master && debug.externalLoading && console.log ('Second Geometry Loaded: The Passed Mesh from OBJ', entities.geometries.dynamic.loadedFromExternal.bufferGeoms.passedMesh );
-		makeLoadedGeometryLineDrawing( entities.geometries.dynamic.loadedFromExternal.bufferGeoms.passedMesh );
-		
-		}, false);	
-}
+};
 
 function initControlEvents() {
 	addEventListener('deviceorientation', setOrientationControls, true);
@@ -1154,9 +1041,9 @@ function materials() {
 	debug.master && debug.materials && console.log ( 'materials(): ' , entities.materials );
 }
 
-/******* GEOMETRIES HANDLING */
+/******* ENTITIES (GEOMETRY THAT APPEARS IN THE SCENE) HANDLING *******/
 
-function initGeometries() {
+var entities = function(){
 	
 	entities.geometries = {
 		constant: {
@@ -1184,17 +1071,11 @@ function initGeometries() {
 
 	// Generate the chart	
 	lucidChart( chartSettings, 'chart1' );
-
-	// Process the geometries whose load-speed we have control over. The loadedGeometries from external sources we'll handle with the objectFinishedLoading event.
-	//utils.geometries.fromExternal.OBJ( 'assets/objects/v4-icosahedron-simplest.obj' );
-	//utils.geometries.mutate();
-	
 }
-
 
 /****** CREATE THE LUCIDCHART ENTITY ******/
 
-var lucidChart = function( chartSettings, name ) { /* takes chartsettings object as param 1 */
+var lucidChart = function( chartSettings, name ) {
 
 	lucidChart.chartName = name || 'chart1';
 	lucidChart.parent = utils.entity.parentEntity( lucidChart.chartName );
@@ -1577,12 +1458,12 @@ lucidChart.init = function() {
 				g: 255, 
 				b: 255
 				},
-			twoToneStops: entities.colorLib.stops.preset.twoTone(),
-			rainbowStops: entities.colorLib.stops.preset.rainbow(),
-			grayScaleStops: entities.colorLib.stops.preset.grayScale(),
+			twoToneStops: colorLib.stops.preset.twoTone(),
+			rainbowStops: colorLib.stops.preset.rainbow(),
+			grayScaleStops: colorLib.stops.preset.grayScale(),
 			gradientType: 'twoTone',
 			palette: { 
-				//We'll fill this empty object with values using the entities.colorLib.generate function below.
+				//We'll fill this empty object with values using the colorLib.generate function below.
 				activeColorStops: chartSettings.color.twoToneStops
 			},
 			thresh: {
@@ -1595,8 +1476,8 @@ lucidChart.init = function() {
 					isTrue: true
 				},
 				setColorsAboveAndBelow: function(){
-					chartSettings.color.thresh.colorBelow = entities.colorLib.stops.get.first( chartSettings.color.palette.activeColorStops );
-					chartSettings.color.thresh.colorAbove = entities.colorLib.stops.get.last( chartSettings.color.palette.activeColorStops );
+					chartSettings.color.thresh.colorBelow = colorLib.stops.get.first( chartSettings.color.palette.activeColorStops );
+					chartSettings.color.thresh.colorAbove = colorLib.stops.get.last( chartSettings.color.palette.activeColorStops );
 				} 
 			},
 			materialSides: THREE.DoubleSide, // Which way to have the normals face?
@@ -1613,7 +1494,7 @@ lucidChart.init = function() {
 	chartSettings.color.getCount();
 	
 	// Generate the library of colors we'll use based on the present defaults above.
-	entities.colorLib.generate( chartSettings ); 
+	colorLib.generate( chartSettings ); 
 	
 	chartSettings.color.thresh.setColorsAboveAndBelow();
 	
@@ -1640,8 +1521,6 @@ lucidChart.update = function() {
 	
 	chartSettings.data.range.start.x = parseInt(UI.browser.inputs.data.range.start.x.val()) || 0;
 	chartSettings.data.range.start.z = parseInt(UI.browser.inputs.data.range.start.z.val()) || 0; 
-//	chartSettings.data.xRangeEnd = ( chartSettings.data.range.start.x + chartSettings.data.count.x );
-//	chartSettings.data.zRangeEnd = ( chartSettings.data.range.start.z + chartSettings.data.count.z );
 	chartSettings.data.range.end.x = parseInt(UI.browser.inputs.data.range.end.x.val()) || 0;
 	chartSettings.data.range.end.z = parseInt(UI.browser.inputs.data.range.end.z.val()) || 0; 
 	chartSettings.data.count.x();
@@ -1677,7 +1556,7 @@ lucidChart.update = function() {
 	
 	chartSettings.color.materialSides = THREE.DoubleSide; // Which way to have the normals face?
 
-	entities.colorLib.generate( chartSettings );
+	colorLib.generate( chartSettings );
 	
 	chartSettings.appearanceOptions.barThicknessRawVal = parseInt(UI.browser.inputs.appearanceOptions.barThicknessRawVal.val()) || 2;
 	chartSettings.appearanceOptions.getBarThickness();
@@ -1835,13 +1714,13 @@ lucidChart.colorFunc = {
 
 /****** DYNAMIC COLOR LIBRARY GENERATION & PRELOAD ******/
 
-entities.colorLib = {
+colorLib = {
 	
 	generate: function( chartSettings ) {
 	
 		var colorCount = chartSettings.color.count;
 		var colorStops = chartSettings.color[chartSettings.color.gradientType + 'Stops'];
-		var stopsCount = entities.colorLib.stops.get.count( colorStops );   // # color stops.	If stops = "red, orange, yellow, green", then 4.
+		var stopsCount = colorLib.stops.get.count( colorStops );   // # color stops.	If stops = "red, orange, yellow, green", then 4.
 		var octaveCount = stopsCount -1;										  // # color stops, minus the last. If 4 stops, then 3.
 		var colorsPerOctave = Math.floor( colorCount / octaveCount );			  // # colors in each octave. If 14 colors and 3 octaves, then 4 (14/3 = 4.67) -> Math.floor(4.67) = 4
 		var modulo = colorCount % octaveCount;									  // # left over after all octaves have been subtracted. If 14 colors and 3 octaves then 2 ( 14 = 12-2 -> 12/3...)
@@ -1863,9 +1742,9 @@ entities.colorLib = {
 		chartSettings.color.palette.colorsPerOctave = colorsPerOctave;
 		chartSettings.color.palette.modulo = modulo;
 		
-		chartSettings.color.palette.colorArray = entities.colorLib.asArray.populate( chartSettings );
+		chartSettings.color.palette.colorArray = colorLib.asArray.populate( chartSettings );
 		
-		debug.master && debug.colorLib && console.log ('entities.colorLib.generate(): ',  chartSettings.color );
+		debug.master && debug.colorLib && console.log ('colorLib.generate(): ',  chartSettings.color );
 	},
 	stops: {
 		preset: {
@@ -1947,7 +1826,7 @@ entities.colorLib = {
 			get: {
 				count: function( obj, colorCountAfterEachStop, i ) {
 					
-					debug.master && debug.colorLib && console.log ( 'entities.colorLib.stops.colorsBetweenEach.get.count: Object Imported: ', obj );
+					debug.master && debug.colorLib && console.log ( 'colorLib.stops.colorsBetweenEach.get.count: Object Imported: ', obj );
 	
 					obj[i].interval = {};
 					
@@ -1956,13 +1835,13 @@ entities.colorLib = {
 					obj[i].interval.g = obj[i].delta.g / colorCountAfterEachStop;
 					obj[i].interval.b = obj[i].delta.b / colorCountAfterEachStop;
 
-					debug.master && debug.colorLib && console.log ( 'entities.colorLib.stops.colorsBetweenEach.get.count: Object Transformed: ', obj );
+					debug.master && debug.colorLib && console.log ( 'colorLib.stops.colorsBetweenEach.get.count: Object Transformed: ', obj );
 				}
 			},
 			calc: function( obj, colorCountAfterEachStop, i ) {					
 				let h = i-1;
 				
-				debug.master && debug.colorLib && console.log ( 'entities.colorLib.stops.colorsBetweenEach.calc: Array imported: ', obj );
+				debug.master && debug.colorLib && console.log ( 'colorLib.stops.colorsBetweenEach.calc: Array imported: ', obj );
 				
 				for ( c = 1 ; c < /* colorCountAfterEachStop */ chartSettings.color.palette.colorsPerOctave ; c++ ) {			
 
@@ -1981,7 +1860,7 @@ entities.colorLib = {
 					
 				}
 				
-				debug.master && debug.colorLib && console.log ( 'entities.colorLib.stops.colorsBetweenEach.calc: Array Transformed: ', obj );
+				debug.master && debug.colorLib && console.log ( 'colorLib.stops.colorsBetweenEach.calc: Array Transformed: ', obj );
 			}
 		}
 	},
@@ -2012,18 +1891,18 @@ entities.colorLib = {
 					stopsArray[i].b[0] >= 255 ? stopsArray[i].b[0] = 255 : false;
 					
 					if (i > 0) {
-						entities.colorLib.stops.get.deltas( stopsArray, i );  // Color changes from one stop to the next.
-						entities.colorLib.stops.colorsBetweenEach.get.count( stopsArray, obj.color.palette.colorCountAfterEachStop, i );
-						entities.colorLib.stops.colorsBetweenEach.calc( stopsArray , obj.color.palette.colorCountAfterEachStop, i );
+						colorLib.stops.get.deltas( stopsArray, i );  // Color changes from one stop to the next.
+						colorLib.stops.colorsBetweenEach.get.count( stopsArray, obj.color.palette.colorCountAfterEachStop, i );
+						colorLib.stops.colorsBetweenEach.calc( stopsArray , obj.color.palette.colorCountAfterEachStop, i );
 					}
 					
 					i++;
 				}
 			}
 			
-			var flattenedArray = entities.colorLib.asArray.flatten( stopsArray, obj.color.palette.colorCountAfterEachStop );
+			var flattenedArray = colorLib.asArray.flatten( stopsArray, obj.color.palette.colorCountAfterEachStop );
 			
-			debug.master && debug.colorLib && console.log ( 'entities.colorLib.asArray.populate(): ', flattenedArray );
+			debug.master && debug.colorLib && console.log ( 'colorLib.asArray.populate(): ', flattenedArray );
 			
 			return flattenedArray;
 		},
@@ -2048,7 +1927,7 @@ entities.colorLib = {
 				
 			};
 
-			debug.master && debug.colorLib && console.log ( 'entities.colorLib.asArray.flatten(): ', flatArray );
+			debug.master && debug.colorLib && console.log ( 'colorLib.asArray.flatten(): ', flatArray );
 			
 			return flatArray;
 		}
@@ -2087,87 +1966,5 @@ function makeLoadedGeometryLineDrawing() {
 	
 	positionObject( entities.geometries.dynamic.loadedFromExternal.mutated.meshAsLineDrawing );
 }
-
-/* PARKED FUNCTIONS */
-
-/*
-function userEquation( usrEquation ) {
-		
-	var functionBody = usrEquation;
-	var prefix = 'function( x, z ) { return (';
-	var suffix = ') ; }';
-	
-	var entire = prefix + functionBody + suffix;
-		
-	return entire;
-} */
-
-/****** UTILITY (EXPERIMENT FOR PARSING MATH INPUT FROM USER )******/
-
-/*
-
-function parseExponentialExpression ( expression ) {
-	
-	var powerSign = '^';
-	var length = expression.length;
-	var parsedExpression;
-	
-	operand = expression.substring( expression.indexOf(0) , expression.indexOf( powerSign ) );
-	exponent = expression.substring( ( expression.indexOf( powerSign ) + 1 ) );
-	
-	parsedExpression = 'Math.pow(' + operand + ', ' + exponent + ')';
-	evaluatedExpression = eval( parsedExpression );
-	
-	debug.master && debug.math && console.log( 'Parsed Exponential Expression = ', parsedExpression );
-	debug.master && debug.math && console.log( 'Parsed Exponential Expression evaluates to :' , evaluatedExpression );
-}
-
-*/
-
-/*
-
-function geo2line( geo ) {
-
-    var geometry = new THREE.Geometry();
-    var vertices = geometry.vertices;
-
-    for ( i = 0; i < geo.faces.length; i++ ) {
-
-        var face = geo.faces[ i ];
-
-        if ( face instanceof THREE.Face3 ) {
-
-                vertices.push( geo.vertices[ face.a ].clone() );
-                vertices.push( geo.vertices[ face.b ].clone() );
-                vertices.push( geo.vertices[ face.b ].clone() );
-                vertices.push( geo.vertices[ face.c ].clone() );
-                vertices.push( geo.vertices[ face.c ].clone() );
-                vertices.push( geo.vertices[ face.a ].clone() );
-
-        } else if ( face instanceof THREE.Face4 ) {
-
-                vertices.push( geo.vertices[ face.a ].clone() );
-                vertices.push( geo.vertices[ face.b ].clone() );
-                vertices.push( geo.vertices[ face.b ].clone() );
-                vertices.push( geo.vertices[ face.c ].clone() );
-                vertices.push( geo.vertices[ face.c ].clone() );
-                vertices.push( geo.vertices[ face.d ].clone() );
-                vertices.push( geo.vertices[ face.d ].clone() );
-                vertices.push( geo.vertices[ face.a ].clone() );
-
-        }
-
-    }
-
-    geometry.computeLineDistances();
-
-    return geometry;
-}
-
-*/
-
-/* END PARKED FUNCTIONS */
-
-
 
 })();
