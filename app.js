@@ -1950,21 +1950,4 @@ function dispatchLoggedEvent( e ) {
 
 /****** END UTILITIES FOR GENERAL EVENT HANDLING ******/
 
-/****** UTILITIES FOR TRANSFORMING OBJECTS LOADED INTO THE SCENE FROM EXTERNAL SOURCES ******/
-
-function makeLoadedGeometryLineDrawing() {
-	
-	var mesh = entities.geometries.dynamic.loadedFromExternal.bufferGeoms.passedMesh;
-	
-	function positionObject( mesh ) {
-		mesh.position.y = 15;
-	}
-	
-	entities.geometries.dynamic.loadedFromExternal.mutated.meshAsLineDrawing = new THREE.Line ( geo2line( mesh.geometry ), entities.materials.line.dashed.red, THREE.linePieces );
-	
-	scene.add( entities.geometries.dynamic.loadedFromExternal.mutated.meshAsLineDrawing );	
-	
-	positionObject( entities.geometries.dynamic.loadedFromExternal.mutated.meshAsLineDrawing );
-}
-
 })();
